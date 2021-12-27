@@ -65,18 +65,21 @@ public:
 				logger::error("	couldn't read INI");
 				continue;
 			}
-
-			logger::info("		reading Forms");
 			if (const auto values = ini.GetSection("Forms"); values && !values->empty()) {
+				logger::info("		reading [Forms]");
 				for (auto& [key, entry] : *values) {
 					get_raw_forms(key.pItem, rawSwapForms);
 				}
+			} else {
+				logger::info("		[Forms] not found");
 			}
-			logger::info("		reading References");
 			if (const auto values = ini.GetSection("References"); values && !values->empty()) {
+				logger::info("		reading [References]");
 				for (auto& [key, entry] : *values) {
 					get_raw_forms(key.pItem, rawSwapRefs);
 				}
+			} else {
+				logger::info("		[References] not found");
 			}
 		}
 	}
@@ -93,19 +96,18 @@ public:
 					string::lexical_cast<RE::FormID>(formPair[0], true), formPair[1]);
 
 				return RE::TESDataHandler::GetSingleton()->LookupFormID(processedFormPair.first, processedFormPair.second);
-			} else {
-				if (const auto form = RE::TESForm::LookupByID(Cache::EditorID::GetSingleton()->GetFormID(a_str)); form) {
-					return form->GetFormID();
-				}
+			}
+			if (const auto form = RE::TESForm::LookupByID(Cache::EditorID::GetSingleton()->GetFormID(a_str)); form) {
+				return form->GetFormID();
 			}
 			return static_cast<RE::FormID>(0);
 		};
 
 		constexpr auto get_flags = [](const std::string& a_str) {
 			std::uint32_t flags = 0;
-		    const auto flagStr = string::split(a_str, ",");
+			const auto flagStr = string::split(a_str, ",");
 			for (auto& flag : flagStr) {
-                if (const auto it = flagsEnum.find(flag); it != flagsEnum.end()) {
+				if (const auto it = flagsEnum.find(flag); it != flagsEnum.end()) {
 					flags += stl::to_underlying(it->second);
 				}
 			}
@@ -115,11 +117,13 @@ public:
 		constexpr auto load_form = [](const std::string& a_base, const std::string& a_replacement, const std::string& a_flags, robin_hood::unordered_flat_map<RE::FormID, FormData>& a_map) {
 			auto baseFormID = get_form(a_base);
 			auto replaceFormID = get_form(a_replacement);
-            auto flags = get_flags(a_flags);
+			auto flags = get_flags(a_flags);
 
 			if (replaceFormID != 0 && baseFormID != 0) {
 				FormData data = { replaceFormID, flags };
 				a_map.emplace(baseFormID, data);
+			} else {
+				logger::error("failed to process [{}|{}|{}] (formID not found)", a_base, a_replacement, a_flags);
 			}
 		};
 
@@ -142,7 +146,7 @@ public:
 
 	std::pair<RE::TESBoundObject*, stl::enumeration<SWAP_FLAGS, std::uint32_t>> GetSwapForm(const RE::TESForm* a_form)
 	{
-        if (const auto it = swapForms.find(a_form->GetFormID()); it != swapForms.end()) {
+		if (const auto it = swapForms.find(a_form->GetFormID()); it != swapForms.end()) {
 			return { RE::TESForm::LookupByID<RE::TESBoundObject>(it->second.formID), it->second.flags };
 		}
 		return { nullptr, SWAP_FLAGS::kNone };
@@ -150,7 +154,7 @@ public:
 
 	std::pair<RE::TESBoundObject*, stl::enumeration<SWAP_FLAGS, std::uint32_t>> GetSwapRef(const RE::TESObjectREFR* a_ref)
 	{
-		if (const auto it = swapForms.find(a_ref->GetFormID()); it != swapForms.end()) {
+		if (const auto it = swapRefs.find(a_ref->GetFormID()); it != swapRefs.end()) {
 			return { RE::TESForm::LookupByID<RE::TESBoundObject>(it->second.formID), it->second.flags };
 		}
 		return { nullptr, SWAP_FLAGS::kNone };
@@ -166,7 +170,7 @@ protected:
 	FormSwapManager& operator=(FormSwapManager&&) = delete;
 
 private:
-    robin_hood::unordered_flat_map<std::string, std::pair<std::string, std::string>> rawSwapForms;
+	robin_hood::unordered_flat_map<std::string, std::pair<std::string, std::string>> rawSwapForms;
 	robin_hood::unordered_flat_map<std::string, std::pair<std::string, std::string>> rawSwapRefs;
 
 	robin_hood::unordered_flat_map<RE::FormID, FormData> swapForms;

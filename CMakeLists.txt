@@ -33,7 +33,7 @@ set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>" CACHE STR
 
 project(
 	po3_BaseObjectSwapper
-	VERSION 1.0.1
+	VERSION 1.1.1
 	LANGUAGES CXX
 )
 

@@ -8,19 +8,19 @@ namespace FormSwap
 		{
 			const auto base = a_ref->GetBaseObject();
 
-		    auto replaceBase = base && !a_ref->IsDynamicForm() ? FormSwapManager::GetSingleton()->GetSwapRef(a_ref) : std::make_pair(nullptr, SWAP_FLAGS::kNone);
-			if (!replaceBase.first) {
-				replaceBase = base && !base->IsDynamicForm() ? FormSwapManager::GetSingleton()->GetSwapForm(base) : std::make_pair(nullptr, SWAP_FLAGS::kNone);
+			auto replaceBaseData = base && !a_ref->IsDynamicForm() ? FormSwapManager::GetSingleton()->GetSwapRef(a_ref) : std::make_pair(nullptr, SWAP_FLAGS::kNone);
+			if (!replaceBaseData.first) {
+				replaceBaseData = base && !base->IsDynamicForm() ? FormSwapManager::GetSingleton()->GetSwapForm(base) : std::make_pair(nullptr, SWAP_FLAGS::kNone);
 			}
 
-			if (replaceBase.first && base != replaceBase.first) {
-				a_ref->SetObjectReference(replaceBase.first);
+			auto& [replaceBase, flags] = replaceBaseData;
+			if (replaceBase && base != replaceBase) {
+				a_ref->SetObjectReference(replaceBase);
 				a_ref->ResetInventory(false);
 			}
 
 			const auto node = func(a_ref, a_backgroundLoading);
-
-		    if (node && replaceBase.second.any(SWAP_FLAGS::kApplyMaterialShader)) {
+			if (node && flags.all(SWAP_FLAGS::kApplyMaterialShader)) {
 				const auto stat = base ? base->As<RE::TESObjectSTAT>() : nullptr;
 				if (const auto shader = stat ? stat->data.materialObj : nullptr; shader) {
 					const auto projectedUVParams = RE::NiColorA{
@@ -109,7 +109,7 @@ extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_s
 
 	FormSwap::Install();
 
-    const auto messaging = SKSE::GetMessagingInterface();
+	const auto messaging = SKSE::GetMessagingInterface();
 	messaging->RegisterListener(MessageHandler);
 
 	return true;
