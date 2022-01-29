@@ -23,6 +23,10 @@
         "CMAKE_TOOLCHAIN_FILE": {
           "type": "STRING",
           "value": "$env{VCPKG_INSTALLATION_ROOT}/scripts/buildsystems/vcpkg.cmake"
+        },
+        "VCPKG_OVERLAY_PORTS": {
+          "type": "STRING",
+          "value": "${sourceDir}/cmake/ports/"
         }
       },
       "hidden": true,
@@ -65,6 +69,21 @@
         "windows"
       ],
       "name": "vs2022-windows-vcpkg",
+      "toolset": "v143"
+    },
+    {
+      "binaryDir": "${sourceDir}/buildvr",
+      "cacheVariables": {
+        "CMAKE_CXX_FLAGS": "/EHsc /MP /W4 /WX $penv{CXXFLAGS}",
+        "BUILD_SKYRIMVR": true
+      },
+      "generator": "Visual Studio 17 2022",
+      "inherits": [
+        "cmake-dev",
+        "vcpkg",
+        "windows"
+      ],
+      "name": "vs2022-windows-vcpkg-vr",
       "toolset": "v143"
     }
   ],
