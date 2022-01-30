@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 set(NAME "po3_BaseObjectSwapper")
-set(VERSION 1.1.0)
+set(VERSION 1.2.0)
 set(VR_VERSION 1)
 
 # ---- Options ----
@@ -51,7 +51,6 @@ message(
 	STATUS
 	"Building for ${SkyrimVersion} at ${SkyrimPath} with ${CommonLibName} at ${CommonLibPath}."
 )
-
 
 if (DEFINED VCPKG_ROOT)
 	set(CMAKE_TOOLCHAIN_FILE "${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
@@ -162,7 +161,7 @@ add_library(
 target_compile_features(
 	${PROJECT_NAME}
 	PRIVATE
-		cxx_std_20
+		cxx_std_23
 )
 
 target_compile_definitions(

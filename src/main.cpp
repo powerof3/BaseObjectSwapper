@@ -2,38 +2,56 @@
 
 namespace FormSwap
 {
+	struct InitItemImpl
+	{
+		static void thunk(RE::TESObjectREFR* a_ref)
+		{
+			const auto base = a_ref->GetBaseObject();
+
+			if (base) {
+				FormSwapManager::GetSingleton()->LoadFormsOnce();
+
+			    auto [swapBase, flags] = FormSwapManager::GetSingleton()->GetSwapData(a_ref, base);
+
+				if (swapBase && base != swapBase) {
+				    a_ref->SetObjectReference(swapBase);
+
+					const FormData originalData = { base->GetFormID(), flags };
+					FormSwapManager::GetSingleton()->SetOriginalBase(a_ref, originalData);
+				}
+			}
+
+			func(a_ref);
+		}
+		static inline REL::Relocation<decltype(thunk)> func;
+
+		static inline constexpr std::size_t size = 0x13;
+	};
+
 	struct Load3D
 	{
 		static RE::NiAVObject* thunk(RE::TESObjectREFR* a_ref, bool a_backgroundLoading)
 		{
-			const auto base = a_ref->GetBaseObject();
-
-			auto replaceBaseData = base && !a_ref->IsDynamicForm() ? FormSwapManager::GetSingleton()->GetSwapRef(a_ref) : std::make_pair(nullptr, SWAP_FLAGS::kNone);
-			if (!replaceBaseData.first) {
-				replaceBaseData = base && !base->IsDynamicForm() ? FormSwapManager::GetSingleton()->GetSwapForm(base) : std::make_pair(nullptr, SWAP_FLAGS::kNone);
-			}
-
-			auto& [replaceBase, flags] = replaceBaseData;
-			if (replaceBase && base != replaceBase) {
-				a_ref->SetObjectReference(replaceBase);
-				a_ref->ResetInventory(false);
-			}
-
 			const auto node = func(a_ref, a_backgroundLoading);
-			if (node && flags.all(SWAP_FLAGS::kApplyMaterialShader)) {
-				const auto stat = base ? base->As<RE::TESObjectSTAT>() : nullptr;
-				if (const auto shader = stat ? stat->data.materialObj : nullptr; shader) {
-					const auto projectedUVParams = RE::NiColorA{
-						shader->directionalData.falloffScale,
-						shader->directionalData.falloffBias,
-						1.0f / shader->directionalData.noiseUVScale,
-						std::cosf(RE::deg_to_rad(stat->data.materialThresholdAngle))
-					};
 
-					node->SetProjectedUVData(
-						projectedUVParams,
-						shader->directionalData.singlePassColor,
-						shader->directionalData.flags.any(RE::BSMaterialObject::DIRECTIONAL_DATA::Flag::kSnow));
+			if (!a_ref->IsDynamicForm() && node) {
+				auto [origBase, flags] = FormSwapManager::GetSingleton()->GetOriginalBase(a_ref);
+
+				if (origBase && flags.all(SWAP_FLAGS::kApplyMaterialShader)) {
+					const auto stat = origBase->As<RE::TESObjectSTAT>();
+					if (const auto shader = stat ? stat->data.materialObj : nullptr; shader) {
+						const auto projectedUVParams = RE::NiColorA{
+							shader->directionalData.falloffScale,
+							shader->directionalData.falloffBias,
+							1.0f / shader->directionalData.noiseUVScale,
+							std::cosf(RE::deg_to_rad(stat->data.materialThresholdAngle))
+						};
+
+						node->SetProjectedUVData(
+							projectedUVParams,
+							shader->directionalData.singlePassColor,
+							shader->directionalData.flags.any(RE::BSMaterialObject::DIRECTIONAL_DATA::Flag::kSnow));
+					}
 				}
 			}
 
@@ -47,16 +65,16 @@ namespace FormSwap
 	inline void Install()
 	{
 		stl::write_vfunc<RE::TESObjectREFR, Load3D>();
-		logger::info("Installed form swap"sv);
+		stl::write_vfunc<RE::TESObjectREFR, InitItemImpl>();
+
+	    logger::info("Installed form swap"sv);
 	}
 }
 
 void MessageHandler(SKSE::MessagingInterface::Message* a_message)
 {
 	if (a_message->type == SKSE::MessagingInterface::kDataLoaded) {
-		Cache::EditorID::GetSingleton()->GetEditorIDs();
-
-		FormSwapManager::GetSingleton()->LoadForms();
+		FormSwapManager::GetSingleton()->PrintConflicts();
 	}
 }
 
@@ -109,10 +127,6 @@ extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_s
 	logger::info("loaded plugin");
 
 	SKSE::Init(a_skse);
-
-	logger::info("{:*^30}", "INI");
-
-	FormSwapManager::GetSingleton()->LoadINI();
 
 	logger::info("{:*^30}", "HOOKS");
 
