@@ -10,5 +10,6 @@
     "rsm-binary-io",
     "simpleini",
     "spdlog",
+    "xbyak"
   ]
 }
