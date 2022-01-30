@@ -1,6 +1,6 @@
 {
   "name": "base-object-swapper",
-  "version-string": "1.1.1",
+  "version-string": "1.2.1",
   "description": "Base Object Swapper",
   "homepage": "",
   "license": "MIT",
@@ -10,6 +10,5 @@
     "rsm-binary-io",
     "simpleini",
     "spdlog",
-    "xbyak"
   ]
 }
