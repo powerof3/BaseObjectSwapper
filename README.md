@@ -33,6 +33,10 @@ SKSE/SKSEVR plugin and framework that allows swapping base forms at runtime
 ```
 git clone https://github.com/powerof3/BaseObjectSwapper.git
 cd BaseObjectSwapper
+# pull commonlib /extern to override the path settings
+git submodule init
+# to update submodules to checked in build
+git submodule update
 ```
 
 ### SSE
