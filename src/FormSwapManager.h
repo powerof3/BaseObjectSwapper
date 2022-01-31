@@ -1,4 +1,5 @@
 #pragma once
+#include "MergeMapper.h"
 
 enum class SWAP_FLAGS
 {
@@ -67,10 +68,9 @@ private:
 		if (a_str.find('~') != std::string::npos) {
 			const auto formPair = string::split(a_str, "~");
 
-			const auto processedFormPair = std::make_pair(
-				string::lexical_cast<RE::FormID>(formPair[0], true), formPair[1]);
+			const auto processedFormPair = MergeMapper::GetNewFormID(formPair[1], formPair[0]);
 
-			return RE::TESDataHandler::GetSingleton()->LookupFormID(processedFormPair.first, processedFormPair.second);
+			return RE::TESDataHandler::GetSingleton()->LookupFormID(processedFormPair.second, processedFormPair.first);
 		}
 		if (const auto form = RE::TESForm::LookupByEditorID(a_str); form) {
 			return form->GetFormID();
