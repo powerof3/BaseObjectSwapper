@@ -65,12 +65,11 @@ namespace MergeMapper
 		//check for merged esps
 		if (mergeMap.contains(espkey)) {
 			modName = mergeMap[espkey]["name"];
-			mergeMap[espkey]["map"];
 			auto storedKey = std::to_string(formID);
 			if (!mergeMap[espkey]["map"].empty()) {
 				std::transform(storedKey.begin(), storedKey.end(), storedKey.begin(), ::tolower);
 				if (mergeMap[espkey]["map"].contains(storedKey)) {
-					formID = std::stoi(mergeMap[espkey]["map"][storedKey].get<std::string>(), 0, 16);
+					formID = std::stoi(mergeMap[espkey]["map"][storedKey].get<std::string>());
 				}
 			}
 		}
