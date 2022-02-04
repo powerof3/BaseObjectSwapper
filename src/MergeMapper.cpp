@@ -34,15 +34,15 @@ namespace MergeMapper
 						}
 						if (mergeMap.contains(espkey))
 							logger::warn(" Duplicate {} found in {}", esp, merged);
+						mergeMap[espkey]["name"] = merged;
 						if (!idmap.empty()) {
-							for (auto& [key, value] : idmap.items()){
+							for (auto& [key, value] : idmap.items()) {
 								auto storedKey = std::to_string(std::stoi(key, 0, 16));
 								std::transform(storedKey.begin(), storedKey.end(), storedKey.begin(), ::tolower);
 								auto storedValue = std::to_string(std::stoi(value.get<std::string>(), 0, 16));
 								std::transform(storedValue.begin(), storedValue.end(), storedValue.begin(), ::tolower);
 								mergeMap[espkey]["map"][storedKey] = storedValue;
 							}
-							mergeMap[espkey]["name"] = merged;
 						}
 					}
 				}
