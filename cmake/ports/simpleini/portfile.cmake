@@ -1,10 +1,10 @@
 # header-only library
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
-    REPO alandtse/simpleini
-    REF 55f28458df411b3573be624a99f9aa54d8977e5f
-    SHA512 0ea40296b1b9b861fd3ccd9198ae9a7654b16160aad10ebc643c55996445ead683775e4c6fe7e5a241fec37e3be2200c8f8527d4ef0bbaee767f7a45390dfda1
-    HEAD_REF allow_empty_values
+    REPO powerof3/simpleini
+    REF f419517a17cd453e644145a5fd82b4479a01f684
+    SHA512 f93ac33a1488c315ccfaf4ab2e76b7b3075d817885f9718ddc3cd257a27e114801b92b36818a423af20cdaf511036caea5b8b3c8f3290e1f76352395b8bf37e0
+    HEAD_REF master
 )
 
 # Install codes

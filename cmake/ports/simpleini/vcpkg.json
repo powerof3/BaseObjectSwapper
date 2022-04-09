@@ -3,5 +3,5 @@
   "version-string": "2021-01-13",
   "port-version": 1,
   "description": "Cross-platform C++ library providing a simple API to read and write INI-style configuration files. Fork to allow empty values",
-  "homepage": "https://github.com/alandtse/simpleini"
+  "homepage": "https://github.com/powerof3/simpleini"
 }
