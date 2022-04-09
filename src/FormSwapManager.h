@@ -1,4 +1,5 @@
 #pragma once
+
 #include "MergeMapper.h"
 
 enum class SWAP_FLAGS
@@ -63,8 +64,8 @@ private:
 
 	std::atomic_bool init{ false };
 
-	[[nodiscard]] RE::FormID get_formID(const std::string& a_str) const
-	{
+	[[nodiscard]] static RE::FormID get_formID(const std::string& a_str)
+    {
 		if (a_str.find('~') != std::string::npos) {
 			const auto formPair = string::split(a_str, "~");
 
@@ -78,7 +79,7 @@ private:
 		return static_cast<RE::FormID>(0);
 	}
 
-	[[nodiscard]] SWAP_FLAGS get_flags(const std::string& a_str)
+	[[nodiscard]] static SWAP_FLAGS get_flags(const std::string& a_str)
 	{
 		std::uint32_t flags = 0;
 		const auto flagStr = string::split(a_str, ",");
