@@ -1,5 +1,5 @@
 set(headers ${headers}
-	src/Cache.h
 	src/FormSwapManager.h
+	src/MergeMapper.h
 	src/PCH.h
 )

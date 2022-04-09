@@ -40,7 +40,7 @@ bool FormSwapManager::LoadFormsOnce()
 			a_map.insert_or_assign(baseFormID, data);
 			a_conflictMap[baseFormID].emplace_back(std::make_pair(a_str, a_path));
 		} else {
-			logger::error("failed to process [{}|{}|{}] (formID not found)", baseFormID, swapFormID, flags);
+			logger::error("{} failed to process {} [{:x}|{:x}|{}] (formID not found)", a_path, a_str, baseFormID, swapFormID, static_cast<int>(flags));
 		}
 	};
 

@@ -1,4 +1,5 @@
 #include "FormSwapManager.h"
+#include "MergeMapper.h"
 
 namespace FormSwap
 {
@@ -127,6 +128,9 @@ extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_s
 	logger::info("loaded plugin");
 
 	SKSE::Init(a_skse);
+
+	logger::info("{:*^30}", "MERGES");
+	MergeMapper::GetMerges();
 
 	logger::info("{:*^30}", "HOOKS");
 
