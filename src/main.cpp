@@ -1,4 +1,4 @@
-#include "FormSwapManager.h"
+#include "FormSwap.h"
 #include "MergeMapper.h"
 
 namespace FormSwap
@@ -7,18 +7,16 @@ namespace FormSwap
 	{
 		static void thunk(RE::TESObjectREFR* a_ref)
 		{
-			const auto base = a_ref->GetBaseObject();
+            if (const auto base = a_ref->GetBaseObject()) {
+				Manager::GetSingleton()->LoadFormsOnce();
 
-			if (base) {
-				FormSwapManager::GetSingleton()->LoadFormsOnce();
-
-			    auto [swapBase, flags] = FormSwapManager::GetSingleton()->GetSwapData(a_ref, base);
+			    auto [swapBase, flags] = Manager::GetSingleton()->GetSwapData(a_ref, base);
 
 				if (swapBase && base != swapBase) {
 				    a_ref->SetObjectReference(swapBase);
 
 					const FormData originalData = { base->GetFormID(), flags };
-					FormSwapManager::GetSingleton()->SetOriginalBase(a_ref, originalData);
+					Manager::GetSingleton()->SetOriginalBase(a_ref, originalData);
 				}
 			}
 
@@ -36,9 +34,9 @@ namespace FormSwap
 			const auto node = func(a_ref, a_backgroundLoading);
 
 			if (!a_ref->IsDynamicForm() && node) {
-				auto [origBase, flags] = FormSwapManager::GetSingleton()->GetOriginalBase(a_ref);
+				auto [origBase, flags] = Manager::GetSingleton()->GetOriginalBase(a_ref);
 
-				if (origBase && flags.all(SWAP_FLAGS::kApplyMaterialShader)) {
+				if (origBase && flags.all(FormData::FLAGS::kApplyMaterialShader)) {
 					const auto stat = origBase->As<RE::TESObjectSTAT>();
 					if (const auto shader = stat ? stat->data.materialObj : nullptr; shader) {
 						const auto projectedUVParams = RE::NiColorA{
@@ -75,7 +73,7 @@ namespace FormSwap
 void MessageHandler(SKSE::MessagingInterface::Message* a_message)
 {
 	if (a_message->type == SKSE::MessagingInterface::kDataLoaded) {
-		FormSwapManager::GetSingleton()->PrintConflicts();
+        FormSwap::Manager::GetSingleton()->PrintConflicts();
 	}
 }
 

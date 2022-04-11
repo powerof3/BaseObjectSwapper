@@ -3,6 +3,7 @@
 #include "RE/Skyrim.h"
 #include "SKSE/SKSE.h"
 
+#include <ranges>
 #include <robin_hood.h>
 #include <SimpleIni.h>
 #include <spdlog/sinks/basic_file_sink.h>
