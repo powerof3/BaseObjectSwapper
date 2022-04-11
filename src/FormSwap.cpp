@@ -228,21 +228,4 @@ namespace FormSwap
 		}
 		return swapData;
 	}
-
-	void Manager::SetOriginalBase(const RE::TESObjectREFR* a_ref, const FormData& a_originalBaseData)
-	{
-		Locker locker(origBaseLock);
-		origBases.emplace(a_ref->GetFormID(), a_originalBaseData);
-	}
-
-	Manager::SwapData Manager::GetOriginalBase(const RE::TESObjectREFR* a_ref)
-	{
-		Locker locker(origBaseLock);
-
-		if (const auto it = origBases.find(a_ref->GetFormID()); it != origBases.end()) {
-			return { RE::TESForm::LookupByID<RE::TESBoundObject>(it->second.formID), it->second.flags };
-		}
-
-		return { nullptr, FormData::FLAGS::kNone };
-	}
 }

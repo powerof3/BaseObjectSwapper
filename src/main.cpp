@@ -14,9 +14,6 @@ namespace FormSwap
 
 				if (swapBase && base != swapBase) {
 				    a_ref->SetObjectReference(swapBase);
-
-					const FormData originalData = { base->GetFormID(), flags };
-					Manager::GetSingleton()->SetOriginalBase(a_ref, originalData);
 				}
 			}
 
@@ -27,44 +24,9 @@ namespace FormSwap
 		static inline constexpr std::size_t size = 0x13;
 	};
 
-	struct Load3D
-	{
-		static RE::NiAVObject* thunk(RE::TESObjectREFR* a_ref, bool a_backgroundLoading)
-		{
-			const auto node = func(a_ref, a_backgroundLoading);
-
-			if (!a_ref->IsDynamicForm() && node) {
-				auto [origBase, flags] = Manager::GetSingleton()->GetOriginalBase(a_ref);
-
-				if (origBase && flags.all(FormData::FLAGS::kApplyMaterialShader)) {
-					const auto stat = origBase->As<RE::TESObjectSTAT>();
-					if (const auto shader = stat ? stat->data.materialObj : nullptr; shader) {
-						const auto projectedUVParams = RE::NiColorA{
-							shader->directionalData.falloffScale,
-							shader->directionalData.falloffBias,
-							1.0f / shader->directionalData.noiseUVScale,
-							std::cosf(RE::deg_to_rad(stat->data.materialThresholdAngle))
-						};
-
-						node->SetProjectedUVData(
-							projectedUVParams,
-							shader->directionalData.singlePassColor,
-							shader->directionalData.flags.any(RE::BSMaterialObject::DIRECTIONAL_DATA::Flag::kSnow));
-					}
-				}
-			}
-
-			return node;
-		}
-		static inline REL::Relocation<decltype(thunk)> func;
-
-		static inline constexpr std::size_t size = 0x6A;
-	};
-
 	inline void Install()
 	{
 		stl::write_vfunc<RE::TESObjectREFR, InitItemImpl>();
-		stl::write_vfunc<RE::TESObjectREFR, Load3D>();
 
 	    logger::info("Installed form swap"sv);
 	}

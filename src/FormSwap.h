@@ -8,8 +8,7 @@ namespace FormSwap
 	{
 		enum class FLAGS
 		{
-			kNone = 0,
-			kApplyMaterialShader
+			kNone = 0
 		};
 
 		[[nodiscard]] static RE::FormID get_formID(const std::string& a_str)
@@ -33,8 +32,7 @@ namespace FormSwap
 			const auto flagStr = string::split(a_str, ",");
 
 			static std::map<std::string, FLAGS> flagsEnum{
-				{ "none", FLAGS::kNone },
-				{ "apply_material_shader", FLAGS::kApplyMaterialShader }
+				{ "none", FLAGS::kNone }
 			};
 
 			for (auto& flag : flagStr) {
@@ -68,9 +66,6 @@ namespace FormSwap
 		SwapData GetSwapConditionalBase(const RE::TESObjectREFR* a_ref, const RE::TESForm* a_base);
 		SwapData GetSwapRef(const RE::TESObjectREFR* a_ref);
 		SwapData GetSwapData(const RE::TESObjectREFR* a_ref, const RE::TESForm* a_base);
-
-		void SetOriginalBase(const RE::TESObjectREFR* a_ref, const FormData& a_originalBaseData);
-		SwapData GetOriginalBase(const RE::TESObjectREFR* a_ref);
 
 	protected:
 		Manager() = default;
@@ -118,9 +113,6 @@ namespace FormSwap
 		FormMap<FormData> swapForms{};
 		FormMap<FormDataConditional> swapFormsConditional{};
 		FormMap<FormData> swapRefs{};
-
-		mutable Lock origBaseLock;
-		FormMap<FormData> origBases{};
 
 		std::atomic_bool init{ false };
 	};
