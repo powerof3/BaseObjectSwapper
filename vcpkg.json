@@ -9,6 +9,7 @@
     "nlohmann-json",
     "robin-hood-hashing",
     "rsm-binary-io",
+    "srell",
     "simpleini",
     "spdlog",
     "xbyak"

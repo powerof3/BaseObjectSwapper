@@ -141,6 +141,7 @@ else ()
 endif()
 
 find_path(SIMPLEINI_INCLUDE_DIRS "ConvertUTF.c")
+find_path(SRELL_INCLUDE_DIRS "srell.hpp")
 
 # ---- Add source files ----
 
@@ -192,6 +193,7 @@ target_include_directories(
 		${CMAKE_CURRENT_BINARY_DIR}/include
 		${CMAKE_CURRENT_SOURCE_DIR}/src
 		${SIMPLEINI_INCLUDE_DIRS}
+		${SRELL_INCLUDE_DIRS}
 )
 
 target_link_libraries(

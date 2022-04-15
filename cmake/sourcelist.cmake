@@ -1,6 +1,7 @@
 set(sources ${sources}
-	src/FormSwap.cpp
+	src/Manager.cpp
 	src/MergeMapper.cpp
 	src/PCH.cpp
+	src/SwapData.cpp
 	src/main.cpp
 )

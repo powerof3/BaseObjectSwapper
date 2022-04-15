@@ -3,10 +3,11 @@
 #include "RE/Skyrim.h"
 #include "SKSE/SKSE.h"
 
+#include <SimpleIni.h>
 #include <ranges>
 #include <robin_hood.h>
-#include <SimpleIni.h>
 #include <spdlog/sinks/basic_file_sink.h>
+#include "srell.hpp"
 
 #define DLLEXPORT __declspec(dllexport)
 
@@ -18,7 +19,7 @@ using namespace std::literals;
 namespace stl
 {
 	using namespace SKSE::stl;
-	
+
 	template <class F, class T>
 	void write_vfunc()
 	{

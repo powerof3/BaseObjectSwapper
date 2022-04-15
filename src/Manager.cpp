@@ -1,53 +1,56 @@
-#include "FormSwap.h"
+#include "Manager.h"
 
 namespace FormSwap
 {
-	std::pair<bool, RE::FormID> Manager::get_forms(const std::string& a_str, FormMap<FormData>& a_map)
+	Manager::SwapMap<SwapData>& Manager::get_form_map(const std::string& a_str)
+	{
+		return a_str == "Forms" ? swapForms : swapRefs;
+	}
+
+	Manager::ConflictMap& Manager::get_conflict_map(const std::string& a_str)
+	{
+		return a_str == "Forms" ? conflictForms : conflictRefs;
+	}
+
+	std::pair<bool, RE::FormID> Manager::get_forms_impl(const std::string& a_str, std::function<void(RE::FormID a_baseID, SwapData& a_swapData)> a_func)
 	{
 		const auto formPair = string::split(a_str, "|");
 
-		auto baseFormID = FormData::get_formID(formPair[0]);
-		auto swapFormID = FormData::get_formID(formPair[1]);
+		auto baseFormID = SwapData::GetFormID(formPair[0]);
+		auto swapFormID = SwapData::GetFormID(formPair[1]);
 
-		const auto flags = formPair.size() > 2 ? FormData::get_flags(formPair[2]) : FormData::FLAGS::kNone;
+		const auto data = formPair.size() > 2 ? formPair[2] : std::string{};
 
 		if (swapFormID != 0 && baseFormID != 0) {
-			FormData data = { swapFormID, flags };
+			SwapData swapData{
+				swapFormID,
+				Transform{ data }
+			};
 
-			a_map.insert_or_assign(baseFormID, data);
+			a_func(baseFormID, swapData);
 
 			return { true, baseFormID };
 		}
 
-		logger::error("			failed to process {} [{:x}|{:x}|{}] (formID not found)", a_str, baseFormID, swapFormID, std::to_underlying(flags));
+		logger::error("			failed to process {} [{:x}|{:x}|{}] (formID not found)", a_str, baseFormID, swapFormID, data);
 
 		return { false, 0 };
 	}
 
-	std::pair<bool, RE::FormID> Manager::get_forms(const std::string& a_str, const std::vector<std::string>& a_conditionalIDs, FormMap<FormDataConditional>& a_map)
+	std::pair<bool, RE::FormID> Manager::get_forms(const std::string& a_str, SwapMap<SwapData>& a_map)
 	{
-		const auto formPair = string::split(a_str, "|");
+		return get_forms_impl(a_str, [&](RE::FormID a_baseID, SwapData& a_swapData) { a_map.insert_or_assign(a_baseID, a_swapData); });
+	}
 
-		auto baseFormID = FormData::get_formID(formPair[0]);
-		auto swapFormID = FormData::get_formID(formPair[1]);
-
-		const auto flags = formPair.size() > 2 ? FormData::get_flags(formPair[2]) : FormData::FLAGS::kNone;
-
-		if (swapFormID != 0 && baseFormID != 0) {
-			const FormData data = { swapFormID, flags };
-
+	std::pair<bool, RE::FormID> Manager::get_forms(const std::string& a_str, const std::vector<std::string>& a_conditionalIDs, SwapMap<SwapDataConditional>& a_map)
+	{
+		return get_forms_impl(a_str, [&](RE::FormID a_baseID, SwapData& a_swapData) {
 			for (auto& id : a_conditionalIDs) {
-				if (const auto processedID = FormData::get_formID(id); processedID != 0) {
-					a_map[baseFormID].insert_or_assign(processedID, data);
+				if (const auto processedID = SwapData::GetFormID(id); processedID != 0) {
+					a_map[a_baseID].insert_or_assign(processedID, a_swapData);
 				}
 			}
-
-			return { true, baseFormID };
-		}
-
-		logger::error("			failed to process {} [{:x}|{:x}|{}] (formID not found)", a_str, baseFormID, swapFormID, std::to_underlying(flags));
-
-		return { false, 0 };
+		});
 	}
 
 	bool Manager::LoadFormsOnce()
@@ -92,6 +95,10 @@ namespace FormSwap
 			CSimpleIniA::TNamesDepend sections;
 			ini.GetAllSections(sections);
 			sections.sort(CSimpleIniA::Entry::LoadOrder());
+
+			constexpr auto map_conflicts = [](const std::string& a_str, const std::string& a_path, RE::FormID a_baseID, ConflictMap& a_conflictMap) {
+				a_conflictMap[a_baseID].emplace_back(std::make_pair(a_str, a_path));
+			};
 
 			for (auto& [section, comment, keyOrder] : sections) {
 				logger::info("		reading [{}]", section);
@@ -156,24 +163,13 @@ namespace FormSwap
 
 	void Manager::PrintConflicts() const
 	{
-		if (hasConflicts) {
-			if (const auto console = RE::ConsoleLog::GetSingleton()) {
-				console->Print("~BASE OBJECT SWAPPER~");
-				console->Print("Conflicts detected, check po3_BaseObjectSwapper.log for more details");
-			}
+		if (const auto console = RE::ConsoleLog::GetSingleton(); hasConflicts) {
+			console->Print("~BASE OBJECT SWAPPER~");
+			console->Print("Conflicts detected, check po3_BaseObjectSwapper.log in {} for more details", logger::log_directory()->relative_path().string().c_str());
 		}
 	}
 
-	Manager::SwapData Manager::GetSwapBase(const RE::TESForm* a_base)
-	{
-		if (const auto it = swapForms.find(a_base->GetFormID()); it != swapForms.end()) {
-			return { RE::TESForm::LookupByID<RE::TESBoundObject>(it->second.formID), it->second.flags };
-		}
-
-		return { nullptr, FormData::FLAGS::kNone };
-	}
-
-	Manager::SwapData Manager::GetSwapConditionalBase(const RE::TESObjectREFR* a_ref, const RE::TESForm* a_base)
+	Manager::SwapResult Manager::GetSwapConditionalBase(const RE::TESObjectREFR* a_ref, const RE::TESForm* a_base)
 	{
 		if (const auto it = swapFormsConditional.find(a_base->GetFormID()); it != swapFormsConditional.end()) {
 			const auto result = std::ranges::find_if(it->second, [&](const auto& formData) {
@@ -199,33 +195,36 @@ namespace FormSwap
 			});
 
 			if (result != it->second.end()) {
-				return { RE::TESForm::LookupByID<RE::TESBoundObject>(result->second.formID), result->second.flags };
+				return { RE::TESForm::LookupByID<RE::TESBoundObject>(result->second.formID), result->second.transform };
 			}
 		}
 
-		return { nullptr, FormData::FLAGS::kNone };
+		return { nullptr, Transform() };
 	}
 
-	Manager::SwapData Manager::GetSwapRef(const RE::TESObjectREFR* a_ref)
+	Manager::SwapResult Manager::GetSwapData(const RE::TESObjectREFR* a_ref, const RE::TESForm* a_base)
 	{
-		if (const auto it = swapRefs.find(a_ref->GetFormID()); it != swapRefs.end()) {
-			return { RE::TESForm::LookupByID<RE::TESBoundObject>(it->second.formID), it->second.flags };
+		constexpr auto get_swap_base = [](const RE::TESForm* a_form, const SwapMap<SwapData>& a_map) {
+			if (const auto it = a_map.find(a_form->GetFormID()); it != a_map.end()) {
+				return SwapResult{ RE::TESForm::LookupByID<RE::TESBoundObject>(it->second.formID), it->second.transform };
+			}
+			return SwapResult{};
+		};
+
+		SwapResult swapData{ std::make_pair(nullptr, Transform()) };
+
+		if (!a_ref->IsDynamicForm()) {
+			swapData = get_swap_base(a_ref, swapRefs);
 		}
 
-		return { nullptr, FormData::FLAGS::kNone };
-	}
-
-	Manager::SwapData Manager::GetSwapData(const RE::TESObjectREFR* a_ref, const RE::TESForm* a_base)
-	{
-		auto nullSwap = std::make_pair(nullptr, FormData::FLAGS::kNone);
-
-		auto swapData = !a_ref->IsDynamicForm() ? GetSwapRef(a_ref) : nullSwap;
 		if (!swapData.first) {
-			swapData = !a_base->IsDynamicForm() ? GetSwapConditionalBase(a_ref, a_base) : nullSwap;
+			swapData = GetSwapConditionalBase(a_ref, a_base);
 		}
+
 		if (!swapData.first) {
-			swapData = !a_base->IsDynamicForm() ? GetSwapBase(a_base) : nullSwap;
+			swapData = get_swap_base(a_base, swapForms);
 		}
+
 		return swapData;
 	}
 }
