@@ -165,7 +165,7 @@ namespace FormSwap
 	{
 		if (const auto console = RE::ConsoleLog::GetSingleton(); hasConflicts) {
 			console->Print("~BASE OBJECT SWAPPER~");
-			console->Print("Conflicts detected, check po3_BaseObjectSwapper.log in {} for more details", logger::log_directory()->relative_path().string().c_str());
+			console->Print("Conflicts detected, check po3_BaseObjectSwapper.log in %s for more details\n", logger::log_directory()->string().c_str());
 		}
 	}
 
