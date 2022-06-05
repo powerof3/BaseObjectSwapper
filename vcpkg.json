@@ -1,6 +1,6 @@
 {
   "name": "base-object-swapper",
-  "version-string": "1.5.0",
+  "version-string": "1.6.0",
   "description": "Base Object Swapper",
   "homepage": "",
   "license": "MIT",
@@ -13,12 +13,5 @@
     "simpleini",
     "spdlog",
     "xbyak"
-  ],
-  "builtin-baseline": "bd1ef2df46303989eeb048eb7aa9b816aa46365e",
-  "overrides": [
-    {
-      "name": "fmt",
-      "version": "8.0.1"
-    }
   ]
 }

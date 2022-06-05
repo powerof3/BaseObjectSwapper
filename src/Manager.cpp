@@ -42,13 +42,11 @@ namespace FormSwap
 		return get_forms_impl(a_str, [&](RE::FormID a_baseID, SwapData& a_swapData) { a_map.insert_or_assign(a_baseID, a_swapData); });
 	}
 
-	std::pair<bool, RE::FormID> Manager::get_forms(const std::string& a_str, const std::vector<std::string>& a_conditionalIDs, SwapMap<SwapDataConditional>& a_map)
+	std::pair<bool, RE::FormID> Manager::get_forms(const std::string& a_str, const std::vector<std::variant<RE::FormID, std::string>>& a_conditionalIDs, SwapMap<SwapDataConditional>& a_map)
 	{
 		return get_forms_impl(a_str, [&](RE::FormID a_baseID, SwapData& a_swapData) {
 			for (auto& id : a_conditionalIDs) {
-				if (const auto processedID = SwapData::GetFormID(id); processedID != 0) {
-					a_map[a_baseID].insert_or_assign(processedID, a_swapData);
-				}
+				a_map[a_baseID].emplace(id, a_swapData);
 			}
 		});
 	}
@@ -79,6 +77,8 @@ namespace FormSwap
 
 		logger::info("	{} matching inis found", configs.size());
 
+		std::ranges::sort(configs);
+
 		for (auto& path : configs) {
 			logger::info("	INI : {}", path);
 
@@ -101,24 +101,40 @@ namespace FormSwap
 			};
 
 			for (auto& [section, comment, keyOrder] : sections) {
-				logger::info("		reading [{}]", section);
-				if (const auto values = ini.GetSection(section); values && !values->empty()) {
-					logger::info("			{} values found", values->size());
-					if (string::icontains(section, "|")) {
-						auto locations = string::split(string::split(section, "|")[1], ",");  //[Forms|EditorID,EditorID2]
-						for (const auto& key : *values | std::views::keys) {
-							std::string value(key.pItem);
-							if (auto [result, baseID] = get_forms(value, locations, swapFormsConditional); result) {
-								map_conflicts(value, path, baseID, conflictForms);
-							}
-						}
-					} else {
+				if (!string::icontains(section, "|")) {
+					logger::info("		reading [{}]", section);
+					if (const auto values = ini.GetSection(section); values && !values->empty()) {
+						logger::info("			{} swaps found", values->size());
 						auto& map = get_form_map(section);
 						auto& conflictMap = get_conflict_map(section);
 						for (const auto& key : *values | std::views::keys) {
 							std::string value(key.pItem);
 							if (auto [result, baseID] = get_forms(value, map); result) {
 								map_conflicts(value, path, baseID, conflictMap);
+							}
+						}
+					}
+				} else {
+					auto conditions = string::split(string::split(section, "|")[1], ",");  //[Forms|EditorID,EditorID2]
+
+					logger::info("		reading [Forms] : {} conditions", conditions.size());
+
+					std::vector<std::variant<RE::FormID, std::string>> processedConditions;
+					processedConditions.reserve(conditions.size());
+					for (auto& condition : conditions) {
+						if (const auto processedID = SwapData::GetFormID(condition); processedID != 0) {
+							processedConditions.push_back(processedID);
+						} else {
+							processedConditions.push_back(condition);
+						}
+					}
+
+					if (const auto values = ini.GetSection(section); values && !values->empty()) {
+						logger::info("				{} swaps found", values->size());
+						for (const auto& key : *values | std::views::keys) {
+							std::string value(key.pItem);
+							if (auto [result, baseID] = get_forms(key.pItem, processedConditions, swapFormsConditional); result) {
+								map_conflicts(value, path, baseID, conflictFormsConditional);
 							}
 						}
 					}
@@ -172,24 +188,32 @@ namespace FormSwap
 	Manager::SwapResult Manager::GetSwapConditionalBase(const RE::TESObjectREFR* a_ref, const RE::TESForm* a_base)
 	{
 		if (const auto it = swapFormsConditional.find(a_base->GetFormID()); it != swapFormsConditional.end()) {
-			const auto result = std::ranges::find_if(it->second, [&](const auto& formData) {
-				if (auto form = RE::TESForm::LookupByID(formData.first)) {
-					switch (form->GetFormType()) {
-					case RE::FormType::Location:
-						{
-							const auto cell = a_ref->GetParentCell();
-							const auto location = cell ? cell->GetLocation() : nullptr;
+			auto cell = a_ref->GetParentCell();
+			if (!cell) {
+				cell = a_ref->GetSaveParentCell();
+			}
+			const auto location = a_ref->GetCurrentLocation();
 
-							return location == form;
-						}
-					case RE::FormType::Cell:
-						{
-							const auto cell = a_ref->GetParentCell();
+			const auto result = std::ranges::find_if(it->second, [&](const auto& formData) {
+				if (std::holds_alternative<RE::FormID>(formData.first)) {
+					if (auto form = RE::TESForm::LookupByID(std::get<RE::FormID>(formData.first)); form) {
+						switch (form->GetFormType()) {
+						case RE::FormType::Location:
+							return location && location == form;
+						case RE::FormType::Cell:
 							return cell && cell == form;
+						case RE::FormType::Keyword:
+							{
+								auto keyword = form->As<RE::BGSKeyword>();
+								return (location && location->HasKeyword(keyword)) || a_ref->HasKeyword(keyword);
+							}
+						default:
+							break;
 						}
-					default:
-						break;
 					}
+				} else {
+					const std::string editorID = std::get<std::string>(formData.first);
+					return cell && cell->GetFormEditorID() == editorID;
 				}
 				return false;
 			});

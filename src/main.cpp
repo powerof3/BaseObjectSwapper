@@ -7,12 +7,12 @@ namespace FormSwap
 	{
 		static void thunk(RE::TESObjectREFR* a_ref)
 		{
-			if (const auto base = a_ref->GetBaseObject()) {
+			if (const auto base = a_ref->GetBaseObject(); base) {
 				Manager::GetSingleton()->LoadFormsOnce();
-
+		
 				auto [swapBase, transformData] = Manager::GetSingleton()->GetSwapData(a_ref, base);
 
-				if (swapBase && base != swapBase) {
+				if (swapBase && base != swapBase) {								
 					a_ref->SetObjectReference(swapBase);
 					transformData.SetTransform(a_ref);
 				}
@@ -116,8 +116,8 @@ extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_s
 
 	FormSwap::Install();
 
-	const auto messaging = SKSE::GetMessagingInterface();
-	messaging->RegisterListener(MessageHandler);
+	/*const auto messaging = SKSE::GetMessagingInterface();
+	messaging->RegisterListener(MessageHandler);*/ 
 
 	return true;
 }

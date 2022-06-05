@@ -37,7 +37,7 @@ namespace FormSwap
 
 		template <class T>
 		using SwapMap = Map<RE::FormID, T>;
-		using SwapDataConditional = Map<RE::FormID, SwapData>;
+		using SwapDataConditional = Map<std::variant<RE::FormID, std::string>, SwapData>;
 
 		using ConflictMap = Map<RE::FormID, std::vector<std::pair<std::string, std::string>>>;  //record, path
 
@@ -50,10 +50,11 @@ namespace FormSwap
         static std::pair<bool, RE::FormID> get_forms_impl(const std::string& a_str, std::function<void(RE::FormID a_baseID, SwapData& a_swapData)> a_func);
 
 		static std::pair<bool, RE::FormID> get_forms(const std::string& a_str, SwapMap<SwapData>& a_map);
-		static std::pair<bool, RE::FormID> get_forms(const std::string& a_str, const std::vector<std::string>& a_conditionalIDs, SwapMap<SwapDataConditional>& a_map);
+		static std::pair<bool, RE::FormID> get_forms(const std::string& a_str, const std::vector<std::variant<RE::FormID, std::string>>& a_conditionalIDs, SwapMap<SwapDataConditional>& a_map);
 
 		ConflictMap conflictForms{};
 		ConflictMap conflictRefs{};
+		ConflictMap conflictFormsConditional{};
 		bool hasConflicts{ false };
 
 		SwapMap<SwapData> swapForms{};
