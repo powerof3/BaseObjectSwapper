@@ -19,8 +19,18 @@ namespace MergeMapper
 				logger::warn("	Unable to convert path to string: {}", e.what());
 			}
 			if (entry.exists() && entry.is_directory() && path.starts_with(mergePrefix)) {
-				auto file = path + L"\\map.json";
+				auto file = path + L"\\merge.json";
 				auto merged = path.substr(13) + L".esp";
+				try {
+					std::ifstream json_file(file);
+					json_file >> json_data;
+					json_file.close();
+					auto filename = json_data["filename"].get<std::string>();
+					merged = std::wstring(filename.begin(), filename.end());
+				} catch (std::exception& e) {
+					logger::warn("	Unable to open {}, defaulting filename to {}:{}", stl::utf16_to_utf8(file).value_or("<unicode conversion error>"s), stl::utf16_to_utf8(merged).value_or("<unicode conversion error>"s), e.what());
+				}
+				file = path + L"\\map.json";
 				try {
 					std::ifstream json_file(file);
 					json_file >> json_data;
@@ -28,7 +38,11 @@ namespace MergeMapper
 				} catch (std::exception& e) {
 					logger::warn("	Unable to open {}:{}", stl::utf16_to_utf8(file).value_or("<unicode conversion error>"s), e.what());
 				}
-				auto converted_merged = stl::utf16_to_utf8(merged).value_or(""s); //json requires wstring conversion to utf encoding https://json.nlohmann.me/home/faq/#parse-errors-reading-non-ascii-characters
+				auto converted_merged = stl::utf16_to_utf8(merged).value_or(""s);  //json requires wstring conversion to utf encoding https://json.nlohmann.me/home/faq/#parse-errors-reading-non-ascii-characters
+				if (!std::filesystem::exists(folder + converted_merged)) {
+					logger::warn("	{} does not exist, not processing merges for this file", converted_merged);
+					continue;
+				}
 				if (converted_merged != "" && !json_data.empty()) {
 					for (auto& [esp, idmap] : json_data.items()) {
 						auto espkey = esp;
