@@ -12,9 +12,11 @@ namespace FormSwap
 		
 				auto [swapBase, transformData] = Manager::GetSingleton()->GetSwapData(a_ref, base);
 
-				if (swapBase && base != swapBase) {								
-					a_ref->SetObjectReference(swapBase);
-					transformData.SetTransform(a_ref);
+				if (swapBase) {								
+					if (base != swapBase) {
+						a_ref->SetObjectReference(swapBase);
+						transformData.SetTransform(a_ref);
+					}
 				}
 			}
 
