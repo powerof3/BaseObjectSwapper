@@ -11,7 +11,7 @@ namespace FormSwap
 			};
 
 			if (const auto splitNum = string::split(a_str, R"(/)"); splitNum.size() > 1) {
-			    return { get_float(splitNum[0]), get_float(splitNum[1]) };
+				return { get_float(splitNum[0]), get_float(splitNum[1]) };
 			} else {
 				auto num = get_float(splitNum[0]);
 				return { num, num };
@@ -27,18 +27,24 @@ namespace FormSwap
 			return stl::RNG::GetSingleton()->Generate(a_min, a_max);
 		}
 
-		static RE::NiPoint3 get_random_value(const RE::NiPoint3& a_min, const RE::NiPoint3& a_max)
+		static RE::NiPoint3 get_random_value(const std::pair<RE::NiPoint3, RE::NiPoint3>& a_minMax)
 		{
-			if (a_min == a_max) {
-				return a_min;
+			auto& [min, max] = a_minMax;
+
+			if (min == max) {
+				return min;
 			}
 
-			return { get_random_value(a_min.x, a_max.x), get_random_value(a_min.y, a_max.y), get_random_value(a_min.z, a_max.z) };
+			return RE::NiPoint3{
+				get_random_value(min.x, max.x),
+				get_random_value(min.y, max.y),
+				get_random_value(min.z, max.z)
+			};
 		}
 	}
 
 	Transform::relData<RE::NiPoint3> Transform::get_transform_from_string(const std::string& a_str)
-    {
+	{
 		bool relative = a_str.contains('R');
 		minMax<RE::NiPoint3> transformData;
 
@@ -61,7 +67,7 @@ namespace FormSwap
 	}
 
 	std::optional<Transform::minMax<float>> Transform::get_scale_from_string(const std::string& a_str)
-    {
+	{
 		minMax<float> scale{ 1.0f, 1.0f };
 
 		srell::cmatch match;
@@ -91,14 +97,20 @@ namespace FormSwap
 	void Transform::SetTransform(RE::TESObjectREFR* a_refr)
 	{
 		if (location) {
-			auto [relative, minMax] = *location;
-			auto [min, max] = minMax;
-			a_refr->data.location = relative ? a_refr->data.location + detail::get_random_value(min, max) : detail::get_random_value(min, max);
+			auto& [relative, minMax] = *location;
+			if (relative) {
+				a_refr->data.location += detail::get_random_value(minMax);
+			} else {
+				a_refr->data.location = detail::get_random_value(minMax);
+			}
 		}
 		if (rotation) {
-			auto [relative, minMax] = *location;
-			auto [min, max] = minMax;
-			a_refr->data.angle = relative ? a_refr->data.angle + detail::get_random_value(min, max) : detail::get_random_value(min, max);
+			auto& [relative, minMax] = *rotation;
+			if (relative) {
+				a_refr->data.angle += detail::get_random_value(minMax);
+			} else {
+				a_refr->data.angle = detail::get_random_value(minMax);
+			}
 		}
 		if (refScale) {
 			auto& [min, max] = *refScale;
