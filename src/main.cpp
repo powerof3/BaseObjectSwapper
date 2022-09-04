@@ -13,10 +13,8 @@ namespace FormSwap
 				auto [swapBase, transformData] = Manager::GetSingleton()->GetSwapData(a_ref, base);
 
 				if (swapBase) {								
-					if (base != swapBase) {
-						a_ref->SetObjectReference(swapBase);
-						transformData.SetTransform(a_ref);
-					}
+					a_ref->SetObjectReference(swapBase);
+					transformData.SetTransform(a_ref);
 				}
 			}
 
@@ -30,7 +28,6 @@ namespace FormSwap
 	inline void Install()
 	{
 		stl::write_vfunc<RE::TESObjectREFR, InitItemImpl>();
-
 		logger::info("Installed form swap"sv);
 	}
 }

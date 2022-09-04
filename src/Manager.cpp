@@ -249,6 +249,17 @@ namespace FormSwap
 			swapData = get_swap_base(a_base, swapForms);
 		}
 
+		if (swapData.first) {
+			if (const auto swapLvlBase = swapData.first->As<RE::TESLevItem>(); swapLvlBase) {
+				RE::BSScrapArray<RE::CALCED_OBJECT> calcedObjects{};
+				swapLvlBase->CalculateCurrentFormList(a_ref->GetCalcLevel(false), 1, calcedObjects, 0, true);
+				if (!calcedObjects.empty()) {
+					const auto calcedForm = calcedObjects.front().form;
+					swapData.first = static_cast<RE::TESBoundObject*>(calcedForm);
+				}
+			}
+		}
+
 		return swapData;
 	}
 }
