@@ -1,5 +1,5 @@
 #include "Manager.h"
-#include "MergeMapper.h"
+#include "MergeMapperPluginAPI.h"
 
 namespace FormSwap
 {
@@ -9,10 +9,10 @@ namespace FormSwap
 		{
 			if (const auto base = a_ref->GetBaseObject(); base) {
 				Manager::GetSingleton()->LoadFormsOnce();
-		
+
 				auto [swapBase, transformData] = Manager::GetSingleton()->GetSwapData(a_ref, base);
 
-				if (swapBase && base != swapBase) {								
+				if (swapBase && base != swapBase) {
 					a_ref->SetObjectReference(swapBase);
 					transformData.SetTransform(a_ref);
 				}
@@ -35,9 +35,17 @@ namespace FormSwap
 
 void MessageHandler(SKSE::MessagingInterface::Message* a_message)
 {
-	if (a_message->type == SKSE::MessagingInterface::kDataLoaded) {
-		FormSwap::Manager::GetSingleton()->PrintConflicts();
+	if (a_message->type == SKSE::MessagingInterface::kPostPostLoad) {
+		MergeMapperPluginAPI::GetMergeMapperInterface001();
+		if (g_mergeMapperInterface) {
+			const auto version = g_mergeMapperInterface->GetBuildNumber();
+			logger::info("Got MergeMapper interface buildnumber {}", version);
+		}else
+			logger::info("MergeMapper not detected");
 	}
+	// if (a_message->type == SKSE::MessagingInterface::kDataLoaded) {
+	// 	FormSwap::Manager::GetSingleton()->PrintConflicts();
+	// }
 }
 
 #ifdef SKYRIM_AE
@@ -107,17 +115,12 @@ extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_s
 	logger::info("loaded");
 
 	SKSE::Init(a_skse);
-
-	logger::info("{:*^30}", "MERGES");
-
-	MergeMapper::GetMerges();
-
 	logger::info("{:*^30}", "HOOKS");
 
 	FormSwap::Install();
 
-	/*const auto messaging = SKSE::GetMessagingInterface();
-	messaging->RegisterListener(MessageHandler);*/ 
+	const auto messaging = SKSE::GetMessagingInterface();
+	messaging->RegisterListener(MessageHandler);
 
 	return true;
 }
