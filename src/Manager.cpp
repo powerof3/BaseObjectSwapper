@@ -201,7 +201,7 @@ namespace FormSwap
 						case RE::FormType::Location:
 							{
 								auto location = form->As<RE::BGSLocation>();
-								return currentLocation && (currentLocation == location || currentLocation->IsChild(location));
+								return currentLocation && (currentLocation == location || currentLocation->IsParent(location));
 							}
 						case RE::FormType::Cell:
 							return cell && cell == form;
