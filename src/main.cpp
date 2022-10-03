@@ -1,41 +1,14 @@
+#include "Hooks.h"
 #include "Manager.h"
-#include "MergeMapper.h"
-
-namespace FormSwap
-{
-	struct InitItemImpl
-	{
-		static void thunk(RE::TESObjectREFR* a_ref)
-		{
-			if (const auto base = a_ref->GetBaseObject(); base) {
-				Manager::GetSingleton()->LoadFormsOnce();
-		
-				auto [swapBase, transformData] = Manager::GetSingleton()->GetSwapData(a_ref, base);
-
-				if (swapBase) {								
-					a_ref->SetObjectReference(swapBase);
-					transformData.SetTransform(a_ref);
-				}
-			}
-
-			func(a_ref);
-		}
-		static inline REL::Relocation<decltype(thunk)> func;
-
-		static inline constexpr std::size_t size = 0x13;
-	};
-
-	inline void Install()
-	{
-		stl::write_vfunc<RE::TESObjectREFR, InitItemImpl>();
-		logger::info("Installed form swap"sv);
-	}
-}
 
 void MessageHandler(SKSE::MessagingInterface::Message* a_message)
 {
-	if (a_message->type == SKSE::MessagingInterface::kDataLoaded) {
-		FormSwap::Manager::GetSingleton()->PrintConflicts();
+	switch (a_message->type) {
+	case SKSE::MessagingInterface::kPostLoad:
+		BaseObjectSwapper::Install();
+	case SKSE::MessagingInterface::kDataLoaded:
+		//FormSwap::Manager::GetSingleton()->PrintConflicts();
+		break;
 	}
 }
 
@@ -103,20 +76,12 @@ extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_s
 {
 	InitializeLog();
 
-	logger::info("loaded");
+	logger::info("Game version : {}", a_skse->RuntimeVersion().string());
 
 	SKSE::Init(a_skse);
 
-	logger::info("{:*^30}", "MERGES");
-
-	MergeMapper::GetMerges();
-
-	logger::info("{:*^30}", "HOOKS");
-
-	FormSwap::Install();
-
-	/*const auto messaging = SKSE::GetMessagingInterface();
-	messaging->RegisterListener(MessageHandler);*/ 
+	const auto messaging = SKSE::GetMessagingInterface();
+	messaging->RegisterListener(MessageHandler);
 
 	return true;
 }

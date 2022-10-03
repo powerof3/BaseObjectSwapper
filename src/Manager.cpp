@@ -123,9 +123,9 @@ namespace FormSwap
 					processedConditions.reserve(conditions.size());
 					for (auto& condition : conditions) {
 						if (const auto processedID = SwapData::GetFormID(condition); processedID != 0) {
-							processedConditions.push_back(processedID);
+							processedConditions.emplace_back(processedID);
 						} else {
-							processedConditions.push_back(condition);
+							processedConditions.emplace_back(condition);
 						}
 					}
 
@@ -192,20 +192,23 @@ namespace FormSwap
 			if (!cell) {
 				cell = a_ref->GetSaveParentCell();
 			}
-			const auto location = a_ref->GetCurrentLocation();
+			const auto currentLocation = a_ref->GetCurrentLocation();
 
 			const auto result = std::ranges::find_if(it->second, [&](const auto& formData) {
 				if (std::holds_alternative<RE::FormID>(formData.first)) {
 					if (auto form = RE::TESForm::LookupByID(std::get<RE::FormID>(formData.first)); form) {
 						switch (form->GetFormType()) {
 						case RE::FormType::Location:
-							return location && location == form;
+							{
+								auto location = form->As<RE::BGSLocation>();
+								return currentLocation && (currentLocation == location || currentLocation->IsChild(location));
+							}
 						case RE::FormType::Cell:
 							return cell && cell == form;
 						case RE::FormType::Keyword:
 							{
 								auto keyword = form->As<RE::BGSKeyword>();
-								return (location && location->HasKeyword(keyword)) || a_ref->HasKeyword(keyword);
+								return (currentLocation && currentLocation->HasKeyword(keyword)) || a_ref->HasKeyword(keyword);
 							}
 						default:
 							break;
