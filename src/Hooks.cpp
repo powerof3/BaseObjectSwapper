@@ -13,8 +13,8 @@ namespace BaseObjectSwapper
 				auto [swapBase, transformData] = FormSwap::Manager::GetSingleton()->GetSwapData(a_ref, base);
 				if (swapBase) {
 					a_ref->SetObjectReference(swapBase);
-					transformData.SetTransform(a_ref);
 				}
+				transformData.SetTransform(a_ref);
 			}
 		}
 	}
@@ -25,7 +25,7 @@ namespace BaseObjectSwapper
 		{
 			static void thunk(RE::TESObjectREFR* a_ref)
 			{
-			    detail::swap_base(a_ref);
+				detail::swap_base(a_ref);
 				func(a_ref);
 			}
 			static inline REL::Relocation<decltype(thunk)> func;
@@ -65,7 +65,7 @@ namespace BaseObjectSwapper
 	{
 		logger::info("{:*^30}", "HOOKS");
 
-	    TESObjectREFR::Install();
+		TESObjectREFR::Install();
 		Character::Install();
 	}
 }

@@ -6,10 +6,10 @@ namespace FormSwap
 {
 	template <class T>
 	using SwapMap = Map<RE::FormID, T>;
-	using SwapDataConditional = Map<FormOrEditorID, SwapData>;
-	using SwapResult = std::pair<RE::TESBoundObject*, Transform>;
 
-	using ConflictMap = Map<RE::FormID, std::vector<std::pair<std::string, std::string>>>;  //record, path
+	using SwapDataVec = std::vector<SwapData>;
+	using SwapDataConditional = Map<FormIDStr, SwapDataVec>;
+	using SwapResult = std::pair<RE::TESBoundObject*, Transform>;
 
 	class Manager
 	{
@@ -37,26 +37,18 @@ namespace FormSwap
 		Manager& operator=(Manager&&) = delete;
 
 	private:
-		using Lock = std::mutex;
-		using Locker = std::scoped_lock<Lock>;
+		SwapMap<SwapDataVec>& get_form_map(const std::string& a_str);
 
-		SwapMap<SwapData>& get_form_map(const std::string& a_str);
-		ConflictMap& get_conflict_map(const std::string& a_str);
+		static void get_forms_impl(const std::string& a_path,const std::string& a_str, std::function<void(RE::FormID, SwapData&)> a_func);
 
-		static std::pair<bool, RE::FormID> get_forms_impl(const std::string& a_str, std::function<void(RE::FormID a_baseID, SwapData& a_swapData)> a_func);
+		static void get_forms(const std::string& a_path, const std::string& a_str, SwapMap<SwapDataVec>& a_map);
+		static void get_forms(const std::string& a_path, const std::string& a_str, const std::vector<FormIDStr>& a_conditionalIDs, SwapMap<SwapDataConditional>& a_map);
 
-		static std::pair<bool, RE::FormID> get_forms(const std::string& a_str, SwapMap<SwapData>& a_map);
-		static std::pair<bool, RE::FormID> get_forms(const std::string& a_str, const std::vector<FormOrEditorID>& a_conditionalIDs, SwapMap<SwapDataConditional>& a_map);
-
-		ConflictMap conflictForms{};
-		ConflictMap conflictRefs{};
-		ConflictMap conflictFormsConditional{};
-		bool hasConflicts{ false };
-
-		SwapMap<SwapData> swapForms{};
-		SwapMap<SwapData> swapRefs{};
+		SwapMap<SwapDataVec> swapForms{};
+		SwapMap<SwapDataVec> swapRefs{};
 		SwapMap<SwapDataConditional> swapFormsConditional{};
 
+		bool hasConflicts{ false };
 		std::atomic_bool init{ false };
 	};
 }

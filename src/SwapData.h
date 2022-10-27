@@ -2,7 +2,7 @@
 
 namespace FormSwap
 {
-	using FormOrEditorID = std::variant<RE::FormID, std::string>;
+	using FormIDStr = std::variant<RE::FormID, std::string>;
 
 	template <class K, class D>
 	using Map = robin_hood::unordered_flat_map<K, D>;
@@ -11,7 +11,7 @@ namespace FormSwap
 
 	using FormIDSet = Set<RE::FormID>;
 	using FormIDOrSet = std::variant<RE::FormID, FormIDSet>;
-    inline bool swap_empty(const FormIDOrSet& a_set)
+	inline bool swap_empty(const FormIDOrSet& a_set)
 	{
 		if (const auto formID = std::get_if<RE::FormID>(&a_set); formID) {
 			return *formID == 0;
@@ -67,6 +67,8 @@ namespace FormSwap
 
 		static inline srell::regex transformRegex{ R"(\((.*?),(.*?),(.*?)\))" };
 		static inline srell::regex scaleRegex{ R"(\((.*?)\))" };
+
+		friend struct Traits;
 	};
 
 	struct Traits
@@ -74,14 +76,23 @@ namespace FormSwap
 		Traits() = default;
 		explicit Traits(const std::string& a_str);
 
-	    bool trueRandom{ false };
+		bool trueRandom{ false };
+		std::uint32_t chance{ 100 };
 	};
 
 	class SwapData
 	{
 	public:
+		struct Input
+		{
+			std::string transformStr;
+			std::string traitsStr;
+			std::string record;
+			std::string path;
+		};
+
 		SwapData() = delete;
-		SwapData(FormIDOrSet a_id, const std::string& a_transformStr, const std::string& a_traitsStr);
+		SwapData(FormIDOrSet a_id, const Input& a_input);
 
 		[[nodiscard]] static RE::FormID GetFormID(const std::string& a_str);
 		[[nodiscard]] static FormIDOrSet GetSwapFormID(const std::string& a_str);
@@ -91,5 +102,8 @@ namespace FormSwap
 		FormIDOrSet formIDSet{};
 		Transform transform{};
 		Traits traits{};
+
+		std::string record{};
+		std::string path{};
 	};
 }

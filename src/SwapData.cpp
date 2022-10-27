@@ -2,7 +2,7 @@
 
 namespace FormSwap
 {
-    namespace detail
+	namespace detail
 	{
 		static Transform::minMax<float> get_min_max(const std::string& a_str)
 		{
@@ -20,7 +20,7 @@ namespace FormSwap
 
 		static float get_random_value(float a_min, float a_max)
 		{
-			if (stl::numeric::essentially_equal(a_min,a_max)) {
+			if (stl::numeric::essentially_equal(a_min, a_max)) {
 				return a_min;
 			}
 
@@ -68,14 +68,12 @@ namespace FormSwap
 
 	std::optional<Transform::minMax<float>> Transform::get_scale_from_string(const std::string& a_str)
 	{
-		minMax<float> scale{ 1.0f, 1.0f };
-
 		srell::cmatch match;
 		if (srell::regex_search(a_str.c_str(), match, scaleRegex)) {
-			scale = detail::get_min_max(match[1].str());
+			return detail::get_min_max(match[1].str());
 		}
 
-		return scale;
+		return minMax<float>{ 1.0f, 1.0f };
 	}
 
 	Transform::Transform(const std::string& a_str)
@@ -122,16 +120,22 @@ namespace FormSwap
 	Traits::Traits(const std::string& a_str)
 	{
 		if (!a_str.empty() && !string::icontains(a_str, "NONE")) {
-			if (a_str == "R") {
+			if (a_str.contains("RAND")) {
 				trueRandom = true;
+			}
+			srell::cmatch match;
+			if (srell::regex_search(a_str.c_str(), match, Transform::scaleRegex)) {
+				chance = string::lexical_cast<std::uint32_t>(match[1].str());
 			}
 		}
 	}
 
-	SwapData::SwapData(FormIDOrSet a_id, const std::string& a_transformStr, const std::string& a_traitsStr) :
+	SwapData::SwapData(FormIDOrSet a_id, const Input& a_input) :
 		formIDSet(std::move(a_id)),
-		transform(a_transformStr),
-		traits(a_traitsStr)
+		transform(a_input.transformStr),
+		traits(a_input.traitsStr),
+		record(a_input.record),
+		path(a_input.path)
 	{}
 
 	RE::FormID SwapData::GetFormID(const std::string& a_str)
@@ -178,7 +182,15 @@ namespace FormSwap
 		auto seededRNG = SeedRNG(a_ref->GetFormID());
 		auto staticRNG = stl::RNG::GetSingleton();
 
-        if (const auto formID = std::get_if<RE::FormID>(&formIDSet); formID) {
+		if (traits.chance != 100) {
+			const auto rng = traits.trueRandom ? staticRNG->Generate<std::uint32_t>(0, 100) :
+			                                     seededRNG.Generate<std::uint32_t>(0, 100);
+			if (rng > traits.chance) {
+				return nullptr;
+			}
+		}
+
+		if (const auto formID = std::get_if<RE::FormID>(&formIDSet); formID) {
 			return RE::TESForm::LookupByID<RE::TESBoundObject>(*formID);
 		} else {  // return random element from set
 			auto& set = std::get<FormIDSet>(formIDSet);
