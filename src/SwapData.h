@@ -66,7 +66,7 @@ namespace FormSwap
 		std::optional<minMax<float>> refScale{ std::nullopt };
 
 		static inline srell::regex transformRegex{ R"(\((.*?),(.*?),(.*?)\))" };
-		static inline srell::regex scaleRegex{ R"(\((.*?)\))" };
+		static inline srell::regex genericRegex{ R"(\((.*?)\))" };
 
 		friend struct Traits;
 	};
@@ -76,8 +76,13 @@ namespace FormSwap
 		Traits() = default;
 		explicit Traits(const std::string& a_str);
 
+		void SetTraits(RE::TESObjectREFR* a_refr);
+
 		bool trueRandom{ false };
 		std::uint32_t chance{ 100 };
+
+		RE::BGSEncounterZone* zone{ nullptr };
+		RE::LEV_CREA_MODIFIER levModifier{ RE::LEV_CREA_MODIFIER::kNone }; //actors only
 	};
 
 	class SwapData
@@ -94,6 +99,7 @@ namespace FormSwap
 		SwapData() = delete;
 		SwapData(FormIDOrSet a_id, const Input& a_input);
 
+		[[nodiscard]] static RE::TESForm* GetForm(const std::string& a_str);
 		[[nodiscard]] static RE::FormID GetFormID(const std::string& a_str);
 		[[nodiscard]] static FormIDOrSet GetSwapFormID(const std::string& a_str);
 

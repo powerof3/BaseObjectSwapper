@@ -1,5 +1,9 @@
 #pragma once
 
+#define WIN32_LEAN_AND_MEAN
+
+#undef GetForm
+
 #include "RE/Skyrim.h"
 #include "SKSE/SKSE.h"
 
