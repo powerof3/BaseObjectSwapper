@@ -6,6 +6,19 @@ void MessageHandler(SKSE::MessagingInterface::Message* a_message)
 	switch (a_message->type) {
 	case SKSE::MessagingInterface::kPostLoad:
 		BaseObjectSwapper::Install();
+		break;
+	case SKSE::MessagingInterface::kPostPostLoad:
+		{
+			logger::info("{:*^30}", "MERGES");
+			MergeMapperPluginAPI::GetMergeMapperInterface001();
+			if (g_mergeMapperInterface) {
+				const auto version = g_mergeMapperInterface->GetBuildNumber();
+				logger::info("Got MergeMapper interface buildnumber {}", version);
+			} else {
+				logger::info("MergeMapper not detected");
+			}
+		}
+		break;
 	case SKSE::MessagingInterface::kDataLoaded:
 		FormSwap::Manager::GetSingleton()->PrintConflicts();
 		break;

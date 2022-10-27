@@ -1,7 +1,5 @@
 #pragma once
 
-#include "MergeMapper.h"
-
 namespace FormSwap
 {
 	using FormOrEditorID = std::variant<RE::FormID, std::string>;

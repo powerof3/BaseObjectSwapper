@@ -137,9 +137,16 @@ namespace FormSwap
 	RE::FormID SwapData::GetFormID(const std::string& a_str)
 	{
 		if (a_str.contains('~')) {
-			const auto formPair = string::split(a_str, "~");
-			const auto [modName, formID] = MergeMapper::GetNewFormID(formPair[1], formPair[0]);
-			return RE::TESDataHandler::GetSingleton()->LookupFormID(formID, modName);
+			if (const auto splitID = string::split(a_str, "~"); splitID.size() == 2) {
+				const auto formID = string::lexical_cast<RE::FormID>(splitID[0], true);
+				const auto& modName = splitID[1];
+				if (g_mergeMapperInterface) {
+					const auto [mergedModName, mergedFormID] = g_mergeMapperInterface->GetNewFormID(modName.c_str(), formID);
+					return RE::TESDataHandler::GetSingleton()->LookupFormID(mergedFormID, mergedModName);
+				} else {
+					return RE::TESDataHandler::GetSingleton()->LookupFormID(formID, modName);
+				}
+			}
 		}
 		if (const auto form = RE::TESForm::LookupByEditorID(a_str); form) {
 			return form->GetFormID();

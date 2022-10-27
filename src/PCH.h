@@ -4,6 +4,7 @@
 #include "SKSE/SKSE.h"
 
 #include "XoshiroCpp.hpp"
+#include <MergeMapperPluginAPI.h>
 #include <SimpleIni.h>
 #include <ranges>
 #include <robin_hood.h>

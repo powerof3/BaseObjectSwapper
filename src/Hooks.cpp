@@ -1,6 +1,5 @@
 #include "Hooks.h"
 #include "Manager.h"
-#include "MergeMapper.h"
 
 namespace BaseObjectSwapper
 {
@@ -64,10 +63,6 @@ namespace BaseObjectSwapper
 
 	void Install()
 	{
-		logger::info("{:*^30}", "MERGES");
-
-		MergeMapper::GetMerges();
-
 		logger::info("{:*^30}", "HOOKS");
 
 	    TESObjectREFR::Install();

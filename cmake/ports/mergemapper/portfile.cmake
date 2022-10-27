@@ -1,0 +1,15 @@
+# header-only library
+vcpkg_from_github(
+    OUT_SOURCE_PATH SOURCE_PATH
+    REPO alandtse/MergeMapper
+    REF 16f8f427b0fa54b26f7825a7f10671088bd54f34
+    SHA512 0f8114cd1e441971521bc902090eae99f2eac5c8c7ab938254c7ed867510384a0afa7730d9ffbe1942348f3a6893bd1db8edea247bd8c7e269f4753b4b1413bc
+    HEAD_REF main
+)
+
+# Install codes
+set(MERGEMAPPER_SOURCE ${SOURCE_PATH}/src/MergeMapperPluginAPI.cpp ${SOURCE_PATH}/include/MergeMapperPluginAPI.h)
+
+file(INSTALL ${MERGEMAPPER_SOURCE} DESTINATION ${CURRENT_PACKAGES_DIR}/include)
+
+file(INSTALL ${SOURCE_PATH}/LICENSE DESTINATION ${CURRENT_PACKAGES_DIR}/share/${PORT} RENAME copyright)
