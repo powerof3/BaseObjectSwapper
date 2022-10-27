@@ -4,4 +4,5 @@ set(headers ${headers}
 	src/MergeMapper.h
 	src/PCH.h
 	src/SwapData.h
+	src/XoshiroCpp.hpp
 )

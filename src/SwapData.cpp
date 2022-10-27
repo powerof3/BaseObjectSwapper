@@ -2,7 +2,7 @@
 
 namespace FormSwap
 {
-	namespace detail
+    namespace detail
 	{
 		static Transform::minMax<float> get_min_max(const std::string& a_str)
 		{
@@ -20,7 +20,7 @@ namespace FormSwap
 
 		static float get_random_value(float a_min, float a_max)
 		{
-			if (a_min == a_max) {
+			if (stl::numeric::essentially_equal(a_min,a_max)) {
 				return a_min;
 			}
 
@@ -80,7 +80,7 @@ namespace FormSwap
 
 	Transform::Transform(const std::string& a_str)
 	{
-		if (!a_str.empty()) {
+		if (!a_str.empty() && !string::icontains(a_str, "NONE")) {
 			const auto transformStrs = string::split(a_str, ",");
 			for (auto& transformStr : transformStrs) {
 				if (transformStr.contains("pos")) {
@@ -119,24 +119,68 @@ namespace FormSwap
 		}
 	}
 
-	SwapData::SwapData(RE::FormID a_id, Transform a_transform) :
-		formID(a_id),
-		transform(std::move(a_transform))
+	Traits::Traits(const std::string& a_str)
+	{
+		if (!a_str.empty() && !string::icontains(a_str, "NONE")) {
+			if (a_str == "R") {
+				trueRandom = true;
+			}
+		}
+	}
+
+	SwapData::SwapData(FormIDOrSet a_id, const std::string& a_transformStr, const std::string& a_traitsStr) :
+		formIDSet(std::move(a_id)),
+		transform(a_transformStr),
+		traits(a_traitsStr)
 	{}
 
 	RE::FormID SwapData::GetFormID(const std::string& a_str)
 	{
-		if (a_str.find('~') != std::string::npos) {
+		if (a_str.contains('~')) {
 			const auto formPair = string::split(a_str, "~");
-
 			const auto [modName, formID] = MergeMapper::GetNewFormID(formPair[1], formPair[0]);
-
 			return RE::TESDataHandler::GetSingleton()->LookupFormID(formID, modName);
 		}
 		if (const auto form = RE::TESForm::LookupByEditorID(a_str); form) {
 			return form->GetFormID();
 		}
-
 		return static_cast<RE::FormID>(0);
+	}
+
+	FormIDOrSet SwapData::GetSwapFormID(const std::string& a_str)
+	{
+		if (a_str.contains(",")) {
+			FormIDSet set;
+			const auto IDStrs = string::split(a_str, ",");
+			set.reserve(IDStrs.size());
+			for (auto& IDStr : IDStrs) {
+				if (auto formID = GetFormID(IDStr); formID != 0) {
+					set.emplace(formID);
+				} else {
+					logger::error("			failed to process {} (SWAP formID not found)", IDStr);
+				}
+			}
+			return set;
+		} else {
+			return GetFormID(a_str);
+		}
+	}
+
+	RE::TESBoundObject* SwapData::GetSwapBase(const RE::TESObjectREFR* a_ref) const
+	{
+		auto seededRNG = SeedRNG(a_ref->GetFormID());
+		auto staticRNG = stl::RNG::GetSingleton();
+
+        if (const auto formID = std::get_if<RE::FormID>(&formIDSet); formID) {
+			return RE::TESForm::LookupByID<RE::TESBoundObject>(*formID);
+		} else {  // return random element from set
+			auto& set = std::get<FormIDSet>(formIDSet);
+
+			const auto setEnd = std::distance(set.begin(), set.end()) - 1;
+			const auto randIt = traits.trueRandom ? staticRNG->Generate<std::size_t>(0, setEnd) :
+			                                        seededRNG.Generate<std::size_t>(0, setEnd);
+
+			return RE::TESForm::LookupByID<RE::TESBoundObject>(*std::next(set.begin(), randIt));
+		}
 	}
 }

@@ -3,11 +3,12 @@
 #include "RE/Skyrim.h"
 #include "SKSE/SKSE.h"
 
+#include "XoshiroCpp.hpp"
 #include <SimpleIni.h>
 #include <ranges>
 #include <robin_hood.h>
 #include <spdlog/sinks/basic_file_sink.h>
-#include "srell.hpp"
+#include <srell.hpp>
 
 #define DLLEXPORT __declspec(dllexport)
 
