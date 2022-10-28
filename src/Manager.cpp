@@ -117,7 +117,7 @@ namespace FormSwap
 					values.sort(CSimpleIniA::Entry::LoadOrder());
 
 					if (!values.empty()) {
-						logger::info("				{} swaps found", values.size());
+						logger::info("			{} swaps found", values.size());
 						for (const auto& key : values) {
 							get_forms(path, key.pItem, processedConditions, swapFormsConditional);
 						}
