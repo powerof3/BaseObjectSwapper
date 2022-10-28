@@ -7,7 +7,7 @@ namespace FormSwap
 		return a_str == "Forms" ? swapForms : swapRefs;
 	}
 
-	void Manager::get_forms_impl(const std::string& a_path, const std::string& a_str, std::function<void(RE::FormID, SwapData&)> a_func)
+	void Manager::get_forms_impl(const std::string& a_path, const std::string& a_str, const std::function<void(RE::FormID, SwapData&)> a_func)
 	{
 		const auto formPair = string::split(a_str, "|");
 
@@ -213,7 +213,7 @@ namespace FormSwap
 						case RE::FormType::Keyword:
 							{
 								auto keyword = form->As<RE::BGSKeyword>();
-								return (currentLocation && currentLocation->HasKeyword(keyword)) || a_ref->HasKeyword(keyword);
+								return currentLocation && currentLocation->HasKeyword(keyword) || a_ref->HasKeyword(keyword);
 							}
 						default:
 							break;
