@@ -17,30 +17,6 @@ namespace FormSwap
 				return { num, num };
 			}
 		}
-
-		static float get_random_value(float a_min, float a_max)
-		{
-			if (stl::numeric::essentially_equal(a_min, a_max)) {
-				return a_min;
-			}
-
-			return stl::RNG::GetSingleton()->Generate(a_min, a_max);
-		}
-
-		static RE::NiPoint3 get_random_value(const std::pair<RE::NiPoint3, RE::NiPoint3>& a_minMax)
-		{
-			auto& [min, max] = a_minMax;
-
-			if (min == max) {
-				return min;
-			}
-
-			return RE::NiPoint3{
-				get_random_value(min.x, max.x),
-				get_random_value(min.y, max.y),
-				get_random_value(min.z, max.z)
-			};
-		}
 	}
 
 	Transform::relData<RE::NiPoint3> Transform::get_transform_from_string(const std::string& a_str)
@@ -76,6 +52,31 @@ namespace FormSwap
 		return minMax<float>{ 1.0f, 1.0f };
 	}
 
+	float Transform::get_random_value(const RandInput& a_input, float a_min, float a_max)
+	{
+		if (stl::numeric::essentially_equal(a_min, a_max)) {
+			return a_min;
+		}
+
+		return a_input.trueRandom ? stl::RNG::GetSingleton()->Generate(a_min, a_max) :
+		                            SeedRNG(a_input.refSeed).Generate(a_min, a_max);
+	}
+
+	RE::NiPoint3 Transform::get_random_value(const RandInput& a_input, const std::pair<RE::NiPoint3, RE::NiPoint3>& a_minMax)
+	{
+		auto& [min, max] = a_minMax;
+
+		if (min == max) {
+			return min;
+		}
+
+		return RE::NiPoint3{
+			get_random_value(a_input, min.x, max.x),
+			get_random_value(a_input, min.y, max.y),
+			get_random_value(a_input, min.z, max.z)
+		};
+	}
+
 	Transform::Transform(const std::string& a_str)
 	{
 		if (!a_str.empty() && !string::icontains(a_str, "NONE")) {
@@ -94,30 +95,33 @@ namespace FormSwap
 
 	void Transform::SetTransform(RE::TESObjectREFR* a_refr) const
 	{
-		if (location) {
-			auto& [relative, minMax] = *location;
-			if (relative) {
-				a_refr->data.location += detail::get_random_value(minMax);
-			} else {
-				a_refr->data.location = detail::get_random_value(minMax);
+		if (location || rotation || refScale) {
+            const RandInput input(useTrueRandom, a_refr->GetFormID());
+		    if (location) {
+				auto& [relative, minMax] = *location;
+				if (relative) {
+					a_refr->data.location += get_random_value(input, minMax);
+				} else {
+					a_refr->data.location = get_random_value(input, minMax);
+				}
 			}
-		}
-		if (rotation) {
-			auto& [relative, minMax] = *rotation;
-			if (relative) {
-				a_refr->data.angle += detail::get_random_value(minMax);
-			} else {
-				a_refr->data.angle = detail::get_random_value(minMax);
+			if (rotation) {
+				auto& [relative, minMax] = *rotation;
+				if (relative) {
+					a_refr->data.angle += get_random_value(input, minMax);
+				} else {
+					a_refr->data.angle = get_random_value(input, minMax);
+				}
 			}
-		}
-		if (refScale) {
-			auto& [min, max] = *refScale;
-			const auto scale = std::clamp(detail::get_random_value(min, max), 0.0f, 1000.0f);
-			a_refr->refScale = static_cast<std::uint16_t>(a_refr->refScale * scale);
+			if (refScale) {
+				auto& [min, max] = *refScale;
+				const auto scale = std::clamp(get_random_value(input, min, max), 0.0f, 1000.0f);
+				a_refr->refScale = static_cast<std::uint16_t>(a_refr->refScale * scale);
+			}
 		}
 	}
 
-	Traits::Traits(const std::string& a_str)
+    Traits::Traits(const std::string& a_str)
 	{
 		if (!a_str.empty() && !string::icontains(a_str, "NONE")) {
 			if (a_str.contains("chance")) {
@@ -125,7 +129,7 @@ namespace FormSwap
 					trueRandom = true;
 				}
 				srell::cmatch match;
-				if (srell::regex_search(a_str.c_str(), match, Transform::genericRegex)) {
+				if (srell::regex_search(a_str.c_str(), match, genericRegex)) {
 					chance = string::lexical_cast<std::uint32_t>(match[1].str());
 				}
 			}
@@ -138,7 +142,11 @@ namespace FormSwap
 		traits(a_input.traitsStr),
 		record(a_input.record),
 		path(a_input.path)
-	{}
+	{
+		if (traits.trueRandom) {
+			transform.useTrueRandom = true;
+		}
+	}
 
 	RE::FormID SwapData::GetFormID(const std::string& a_str)
 	{

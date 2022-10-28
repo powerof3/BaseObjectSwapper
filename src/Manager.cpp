@@ -95,7 +95,7 @@ namespace FormSwap
 				if (const auto processedID = SwapData::GetFormID(a_condition); processedID != 0) {
 					a_processedFilters.emplace_back(processedID);
 				} else {
-					logger::error("		Filter  [{}] INFO - unable to find form, treating filter as cell editorID", a_condition);
+					logger::error("		Filter  [{}] INFO - unable to find form, treating filter as string", a_condition);
 					a_processedFilters.emplace_back(a_condition);
 				}
 			};
@@ -210,8 +210,6 @@ namespace FormSwap
 								auto location = form->As<RE::BGSLocation>();
 								return currentLocation && (currentLocation == location || currentLocation->IsParent(location));
 							}
-						case RE::FormType::Cell:
-							return cell && cell == form;
 						case RE::FormType::Keyword:
 							{
 								auto keyword = form->As<RE::BGSKeyword>();
@@ -223,7 +221,15 @@ namespace FormSwap
 					}
 				} else {
 					const std::string editorID = std::get<std::string>(formData.first);
-					return cell && cell->GetFormEditorID() == editorID;
+					if (cell && cell->GetFormEditorID() == editorID) {
+						return true;
+					}
+					if (currentLocation && currentLocation->HasKeywordString(editorID)) {
+						return true;
+					}
+					if (const auto keywordForm = a_base->As<RE::BGSKeywordForm>()) {
+						return keywordForm->HasKeywordString(editorID);
+					}
 				}
 				return false;
 			});

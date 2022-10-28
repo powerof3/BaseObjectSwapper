@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
-set(NAME "po3_BaseObjectSwapper")
-set(VERSION 1.8.0)
+set(NAME "po3_BaseObjectSwapper" CACHE STRING "")
+set(VERSION 1.7.0 CACHE STRING "")
 set(VR_VERSION 1)
 set(AE_VERSION 1)
 

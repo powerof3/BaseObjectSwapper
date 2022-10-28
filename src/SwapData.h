@@ -20,6 +20,8 @@ namespace FormSwap
 		}
 	}
 
+	inline srell::regex genericRegex{ R"(\((.*?)\))" };
+
 	class SeedRNG
 	{
 	public:
@@ -61,15 +63,25 @@ namespace FormSwap
 		[[nodiscard]] static relData<RE::NiPoint3> get_transform_from_string(const std::string& a_str);
 		[[nodiscard]] static std::optional<minMax<float>> get_scale_from_string(const std::string& a_str);
 
+		struct RandInput
+		{
+			bool trueRandom{ false };
+			RE::FormID refSeed{ 0 };
+		};
+
+		static float get_random_value(const RandInput& a_input, float a_min, float a_max);
+		static RE::NiPoint3 get_random_value(const RandInput& a_input, const std::pair<RE::NiPoint3, RE::NiPoint3>& a_minMax);
+
 		// members
-	    std::optional<relData<RE::NiPoint3>> location{ std::nullopt };
+		std::optional<relData<RE::NiPoint3>> location{ std::nullopt };
 		std::optional<relData<RE::NiPoint3>> rotation{ std::nullopt };
 		std::optional<minMax<float>> refScale{ std::nullopt };
 
-		static inline srell::regex transformRegex{ R"(\((.*?),(.*?),(.*?)\))" };
-		static inline srell::regex genericRegex{ R"(\((.*?)\))" };
+		bool useTrueRandom{ false };
 
-		friend struct Traits;
+		static inline srell::regex transformRegex{ R"(\((.*?),(.*?),(.*?)\))" };
+
+		friend class SwapData;
 	};
 
 	struct Traits
