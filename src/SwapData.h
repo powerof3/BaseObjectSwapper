@@ -55,13 +55,14 @@ namespace FormSwap
 		Transform() = default;
 		explicit Transform(const std::string& a_str);
 
-		void SetTransform(RE::TESObjectREFR* a_refr);
+		void SetTransform(RE::TESObjectREFR* a_refr) const;
 
 	private:
 		[[nodiscard]] static relData<RE::NiPoint3> get_transform_from_string(const std::string& a_str);
 		[[nodiscard]] static std::optional<minMax<float>> get_scale_from_string(const std::string& a_str);
 
-		std::optional<relData<RE::NiPoint3>> location{ std::nullopt };
+		// members
+	    std::optional<relData<RE::NiPoint3>> location{ std::nullopt };
 		std::optional<relData<RE::NiPoint3>> rotation{ std::nullopt };
 		std::optional<minMax<float>> refScale{ std::nullopt };
 
@@ -76,13 +77,9 @@ namespace FormSwap
 		Traits() = default;
 		explicit Traits(const std::string& a_str);
 
-		void SetTraits(RE::TESObjectREFR* a_refr);
-
+		// members
 		bool trueRandom{ false };
 		std::uint32_t chance{ 100 };
-
-		RE::BGSEncounterZone* zone{ nullptr };
-		RE::LEV_CREA_MODIFIER levModifier{ RE::LEV_CREA_MODIFIER::kNone }; //actors only
 	};
 
 	class SwapData
@@ -99,12 +96,12 @@ namespace FormSwap
 		SwapData() = delete;
 		SwapData(FormIDOrSet a_id, const Input& a_input);
 
-		[[nodiscard]] static RE::TESForm* GetForm(const std::string& a_str);
 		[[nodiscard]] static RE::FormID GetFormID(const std::string& a_str);
 		[[nodiscard]] static FormIDOrSet GetSwapFormID(const std::string& a_str);
 
 		RE::TESBoundObject* GetSwapBase(const RE::TESObjectREFR* a_ref) const;
 
+		// members
 		FormIDOrSet formIDSet{};
 		Transform transform{};
 		Traits traits{};

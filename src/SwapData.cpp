@@ -92,7 +92,7 @@ namespace FormSwap
 		}
 	}
 
-	void Transform::SetTransform(RE::TESObjectREFR* a_refr)
+	void Transform::SetTransform(RE::TESObjectREFR* a_refr) const
 	{
 		if (location) {
 			auto& [relative, minMax] = *location;
@@ -120,39 +120,19 @@ namespace FormSwap
 	Traits::Traits(const std::string& a_str)
 	{
 		if (!a_str.empty() && !string::icontains(a_str, "NONE")) {
-			const auto traitStrs = string::split(a_str, ",");
-			for (auto& traitStr : traitStrs) {
-				if (traitStr.contains("chance")) {
-					if (traitStr.contains("R")) {
-						trueRandom = true;
-					}
-					srell::cmatch match;
-					if (srell::regex_search(traitStr.c_str(), match, Transform::genericRegex)) {
-						chance = string::lexical_cast<std::uint32_t>(match[1].str());
-					}
-				} else if (traitStr.contains("zone")) {
-					srell::cmatch match;
-					if (srell::regex_search(traitStr.c_str(), match, Transform::genericRegex)) {
-						zone = static_cast<RE::BGSEncounterZone*>(SwapData::GetForm(match[1].str()));
-					}
-				} else if (traitStr.contains("level")) {
-					srell::cmatch match;
-					if (srell::regex_search(traitStr.c_str(), match, Transform::genericRegex)) {
-						levModifier = string::lexical_cast<RE::LEV_CREA_MODIFIER>(match[1].str());
-					}
+			if (a_str.contains("chance")) {
+				if (a_str.contains("R")) {
+					trueRandom = true;
+				}
+				srell::cmatch match;
+				if (srell::regex_search(a_str.c_str(), match, Transform::genericRegex)) {
+					chance = string::lexical_cast<std::uint32_t>(match[1].str());
 				}
 			}
 		}
 	}
 
-    void Traits::SetTraits(RE::TESObjectREFR* a_refr)
-	{
-		if (a_refr->Is(RE::FormType::ActorCharacter)) {
-		    // tbd
-		}
-	}
-
-    SwapData::SwapData(FormIDOrSet a_id, const Input& a_input) :
+	SwapData::SwapData(FormIDOrSet a_id, const Input& a_input) :
 		formIDSet(std::move(a_id)),
 		transform(a_input.transformStr),
 		traits(a_input.traitsStr),
@@ -160,13 +140,7 @@ namespace FormSwap
 		path(a_input.path)
 	{}
 
-    RE::TESForm* SwapData::GetForm(const std::string& a_str)
-    {
-        const auto formID = GetFormID(a_str);
-	    return formID != 0 ? RE::TESForm::LookupByID(formID) : nullptr;
-    }
-
-    RE::FormID SwapData::GetFormID(const std::string& a_str)
+	RE::FormID SwapData::GetFormID(const std::string& a_str)
 	{
 		if (a_str.contains('~')) {
 			if (const auto splitID = string::split(a_str, "~"); splitID.size() == 2) {

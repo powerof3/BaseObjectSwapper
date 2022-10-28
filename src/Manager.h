@@ -9,7 +9,7 @@ namespace FormSwap
 
 	using SwapDataVec = std::vector<SwapData>;
 	using SwapDataConditional = Map<FormIDStr, SwapDataVec>;
-	using SwapResult = std::pair<RE::TESBoundObject*, Transform>;
+	using SwapResult = std::tuple<RE::TESBoundObject*, std::optional<Transform>>;
 
 	class Manager
 	{
