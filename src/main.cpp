@@ -1,51 +1,30 @@
+#include "Hooks.h"
 #include "Manager.h"
-#include "MergeMapperPluginAPI.h"
-
-namespace FormSwap
-{
-	struct InitItemImpl
-	{
-		static void thunk(RE::TESObjectREFR* a_ref)
-		{
-			if (const auto base = a_ref->GetBaseObject(); base) {
-				Manager::GetSingleton()->LoadFormsOnce();
-
-				auto [swapBase, transformData] = Manager::GetSingleton()->GetSwapData(a_ref, base);
-
-				if (swapBase && base != swapBase) {
-					a_ref->SetObjectReference(swapBase);
-					transformData.SetTransform(a_ref);
-				}
-			}
-
-			func(a_ref);
-		}
-		static inline REL::Relocation<decltype(thunk)> func;
-
-		static inline constexpr std::size_t size = 0x13;
-	};
-
-	inline void Install()
-	{
-		stl::write_vfunc<RE::TESObjectREFR, InitItemImpl>();
-
-		logger::info("Installed form swap"sv);
-	}
-}
 
 void MessageHandler(SKSE::MessagingInterface::Message* a_message)
 {
-	if (a_message->type == SKSE::MessagingInterface::kPostPostLoad) {
-		MergeMapperPluginAPI::GetMergeMapperInterface001();
-		if (g_mergeMapperInterface) {
-			const auto version = g_mergeMapperInterface->GetBuildNumber();
-			logger::info("Got MergeMapper interface buildnumber {}", version);
-		}else
-			logger::info("MergeMapper not detected");
+	switch (a_message->type) {
+	case SKSE::MessagingInterface::kPostLoad:
+		BaseObjectSwapper::Install();
+		break;
+	case SKSE::MessagingInterface::kPostPostLoad:
+		{
+			logger::info("{:*^30}", "MERGES");
+			MergeMapperPluginAPI::GetMergeMapperInterface001();
+			if (g_mergeMapperInterface) {
+				const auto version = g_mergeMapperInterface->GetBuildNumber();
+				logger::info("Got MergeMapper interface buildnumber {}", version);
+			} else {
+				logger::info("MergeMapper not detected");
+			}
+		}
+		break;
+	case SKSE::MessagingInterface::kDataLoaded:
+		FormSwap::Manager::GetSingleton()->PrintConflicts();
+		break;
+	default:
+		break;
 	}
-	// if (a_message->type == SKSE::MessagingInterface::kDataLoaded) {
-	// 	FormSwap::Manager::GetSingleton()->PrintConflicts();
-	// }
 }
 
 #ifdef SKYRIM_AE
@@ -54,7 +33,8 @@ extern "C" DLLEXPORT constinit auto SKSEPlugin_Version = []() {
 	v.PluginVersion(Version::MAJOR);
 	v.PluginName("Base Object Swapper");
 	v.AuthorName("powerofthree");
-	v.UsesAddressLibrary(true);
+	v.UsesAddressLibrary();
+	v.UsesNoStructs();
 	v.CompatibleVersions({ SKSE::RUNTIME_LATEST });
 
 	return v;
@@ -103,7 +83,7 @@ void InitializeLog()
 	log->flush_on(spdlog::level::info);
 
 	spdlog::set_default_logger(std::move(log));
-	spdlog::set_pattern("[%l] %v"s);
+	spdlog::set_pattern("[%H:%M:%S:%e] %v"s);
 
 	logger::info(FMT_STRING("{} v{}"), Version::PROJECT, Version::NAME);
 }
@@ -112,12 +92,9 @@ extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_s
 {
 	InitializeLog();
 
-	logger::info("loaded");
+	logger::info("Game version : {}", a_skse->RuntimeVersion().string());
 
 	SKSE::Init(a_skse);
-	logger::info("{:*^30}", "HOOKS");
-
-	FormSwap::Install();
 
 	const auto messaging = SKSE::GetMessagingInterface();
 	messaging->RegisterListener(MessageHandler);

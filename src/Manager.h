@@ -4,11 +4,16 @@
 
 namespace FormSwap
 {
+	template <class T>
+	using SwapMap = Map<RE::FormID, T>;
+
+	using SwapDataVec = std::vector<SwapData>;
+	using SwapDataConditional = Map<FormIDStr, SwapDataVec>;
+	using SwapResult = std::tuple<RE::TESBoundObject*, std::optional<Transform>>;
+
 	class Manager
 	{
 	public:
-		using SwapResult = std::pair<RE::TESBoundObject*, Transform>;
-
 		[[nodiscard]] static Manager* GetSingleton()
 		{
 			static Manager singleton;
@@ -32,35 +37,18 @@ namespace FormSwap
 		Manager& operator=(Manager&&) = delete;
 
 	private:
-		template <class K, class D>
-		using Map = robin_hood::unordered_flat_map<K, D>;
+		SwapMap<SwapDataVec>& get_form_map(const std::string& a_str);
 
-		template <class T>
-		using SwapMap = Map<RE::FormID, T>;
-		using SwapDataConditional = Map<std::variant<RE::FormID, std::string>, SwapData>;
+		static void get_forms_impl(const std::string& a_path,const std::string& a_str, std::function<void(RE::FormID, SwapData&)> a_func);
 
-		using ConflictMap = Map<RE::FormID, std::vector<std::pair<std::string, std::string>>>;  //record, path
+		static void get_forms(const std::string& a_path, const std::string& a_str, SwapMap<SwapDataVec>& a_map);
+		static void get_forms(const std::string& a_path, const std::string& a_str, const std::vector<FormIDStr>& a_conditionalIDs, SwapMap<SwapDataConditional>& a_map);
 
-		using Lock = std::mutex;
-		using Locker = std::scoped_lock<Lock>;
-
-		SwapMap<SwapData>& get_form_map(const std::string& a_str);
-        ConflictMap& get_conflict_map(const std::string& a_str);
-
-        static std::pair<bool, RE::FormID> get_forms_impl(const std::string& a_str, std::function<void(RE::FormID a_baseID, SwapData& a_swapData)> a_func);
-
-		static std::pair<bool, RE::FormID> get_forms(const std::string& a_str, SwapMap<SwapData>& a_map);
-		static std::pair<bool, RE::FormID> get_forms(const std::string& a_str, const std::vector<std::variant<RE::FormID, std::string>>& a_conditionalIDs, SwapMap<SwapDataConditional>& a_map);
-
-		ConflictMap conflictForms{};
-		ConflictMap conflictRefs{};
-		ConflictMap conflictFormsConditional{};
-		bool hasConflicts{ false };
-
-		SwapMap<SwapData> swapForms{};
-		SwapMap<SwapData> swapRefs{};
+		SwapMap<SwapDataVec> swapForms{};
+		SwapMap<SwapDataVec> swapRefs{};
 		SwapMap<SwapDataConditional> swapFormsConditional{};
 
+		bool hasConflicts{ false };
 		std::atomic_bool init{ false };
 	};
 }

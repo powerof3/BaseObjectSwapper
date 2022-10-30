@@ -22,7 +22,7 @@
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": {
           "type": "STRING",
-          "value": "$env{VCPKG_INSTALLATION_ROOT}/scripts/buildsystems/vcpkg.cmake"
+          "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
         },
         "VCPKG_OVERLAY_PORTS": {
           "type": "STRING",
@@ -48,47 +48,7 @@
     },
     {
       "cacheVariables": {
-        "CMAKE_CXX_FLAGS": "/EHsc /MP /W4 /external:anglebrackets /external:W0 $penv{CXXFLAGS}"
-      },
-      "generator": "Visual Studio 16 2019",
-      "inherits": [
-        "cmake-dev",
-        "vcpkg",
-        "windows"
-      ],
-      "name": "vs2019-windows-vcpkg-se"
-    },
-    {
-      "binaryDir": "${sourceDir}/buildvr",
-      "cacheVariables": {
-        "CMAKE_CXX_FLAGS": "/EHsc /MP /W4 /external:anglebrackets /external:W0 $penv{CXXFLAGS}",
-        "BUILD_SKYRIMVR": true
-      },
-      "generator": "Visual Studio 16 2019",
-      "inherits": [
-        "cmake-dev",
-        "vcpkg",
-        "windows"
-      ],
-      "name": "vs2019-windows-vcpkg-vr"
-    },
-    {
-      "binaryDir": "${sourceDir}/buildae",
-      "cacheVariables": {
-        "CMAKE_CXX_FLAGS": "/EHsc /MP /W4 /external:anglebrackets /external:W0 $penv{CXXFLAGS}",
-        "BUILD_SKYRIMAE": true
-      },
-      "generator": "Visual Studio 16 2019",
-      "inherits": [
-        "cmake-dev",
-        "vcpkg",
-        "windows"
-      ],
-      "name": "vs2019-windows-vcpkg-ae"
-    },
-    {
-      "cacheVariables": {
-        "CMAKE_CXX_FLAGS": "/EHsc /MP /W4 /WX /external:W0"
+        "CMAKE_CXX_FLAGS": "/EHsc /MP /W4 /WX /external:W0 $penv{CXXFLAGS}"
       },
       "generator": "Visual Studio 17 2022",
       "inherits": [
@@ -102,7 +62,7 @@
     {
       "binaryDir": "${sourceDir}/buildvr",
       "cacheVariables": {
-        "CMAKE_CXX_FLAGS": "/EHsc /MP /W4 /WX /external:W0",
+        "CMAKE_CXX_FLAGS": "/EHsc /MP /W4 /WX /external:W0 $penv{CXXFLAGS}",
         "BUILD_SKYRIMVR": true
       },
       "generator": "Visual Studio 17 2022",
@@ -117,7 +77,7 @@
     {
       "binaryDir": "${sourceDir}/buildae",
       "cacheVariables": {
-        "CMAKE_CXX_FLAGS": "/EHsc /MP /W4 /WX /external:W0",
+        "CMAKE_CXX_FLAGS": "/EHsc /MP /W4 /WX /external:W0 $penv{CXXFLAGS}",
         "BUILD_SKYRIMAE": true
       },
       "generator": "Visual Studio 17 2022",
