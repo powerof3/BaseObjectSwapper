@@ -1,5 +1,4 @@
 #include "SwapData.h"
-#include "MergeMapperPluginAPI.h"
 
 namespace FormSwap
 {
