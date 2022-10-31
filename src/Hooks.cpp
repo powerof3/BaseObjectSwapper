@@ -13,13 +13,11 @@ namespace BaseObjectSwapper
 					FormSwap::Manager::GetSingleton()->LoadFormsOnce();
 
 					const auto& [swapBase, transformData] = FormSwap::Manager::GetSingleton()->GetSwapData(a_ref, base);
-					if (swapBase) {
-						if (swapBase != base) {
-							a_ref->SetObjectReference(swapBase);
-						}
-						if (transformData) {
-							transformData->SetTransform(a_ref);
-						}
+					if (swapBase && swapBase != base) {
+						a_ref->SetObjectReference(swapBase);
+					}
+					if (transformData) {
+						transformData->SetTransform(a_ref);
 					}
 				}
 

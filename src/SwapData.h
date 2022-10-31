@@ -26,6 +26,9 @@ namespace FormSwap
 	{
 	public:
 		SeedRNG() = delete;
+		explicit SeedRNG(const std::uint64_t a_seed) :
+			rng(a_seed)
+		{}
 		explicit SeedRNG(const RE::FormID a_seed) :
 			rng(a_seed)
 		{}
@@ -42,9 +45,16 @@ namespace FormSwap
 			}
 		}
 
+		std::uint32_t Generate()
+		{
+			return Generate<std::uint32_t>(0, 100);
+		}
+
 	private:
 		XoshiroCpp::Xoshiro256StarStar rng;
 	};
+
+	inline SeedRNG staticRNG(static_cast<std::uint64_t>(std::chrono::steady_clock::now().time_since_epoch().count()));
 
 	class Transform
 	{
@@ -58,6 +68,12 @@ namespace FormSwap
 		explicit Transform(const std::string& a_str);
 
 		void SetTransform(RE::TESObjectREFR* a_refr) const;
+		bool IsValid() const;
+
+		bool operator==(Transform const& a_rhs) const
+		{
+			return location && a_rhs.location || rotation && a_rhs.location || refScale && a_rhs.refScale;
+		}
 
 	private:
 		[[nodiscard]] static relData<RE::NiPoint3> get_transform_from_string(const std::string& a_str);
@@ -81,7 +97,7 @@ namespace FormSwap
 
 		static inline srell::regex transformRegex{ R"(\((.*?),(.*?),(.*?)\))" };
 
-		friend class SwapData;
+		friend class TransformData;
 	};
 
 	struct Traits
@@ -94,7 +110,7 @@ namespace FormSwap
 		std::uint32_t chance{ 100 };
 	};
 
-	class SwapData
+	class TransformData
 	{
 	public:
 		struct Input
@@ -105,20 +121,34 @@ namespace FormSwap
 			std::string path;
 		};
 
-		SwapData() = delete;
-		SwapData(FormIDOrSet a_id, const Input& a_input);
+		TransformData() = delete;
+        explicit TransformData(const Input& a_input);
 
 		[[nodiscard]] static RE::FormID GetFormID(const std::string& a_str);
-		[[nodiscard]] static FormIDOrSet GetSwapFormID(const std::string& a_str);
+		bool IsTransformValid(const RE::TESObjectREFR* a_ref) const;
 
-		RE::TESBoundObject* GetSwapBase(const RE::TESObjectREFR* a_ref) const;
+		static void GetTransforms(const std::string& a_path, const std::string& a_str, std::function<void(RE::FormID, TransformData&)> a_func);
 
 		// members
-		FormIDOrSet formIDSet{};
 		Transform transform{};
 		Traits traits{};
 
 		std::string record{};
 		std::string path{};
+	};
+
+	class SwapData : public TransformData
+	{
+	public:
+		SwapData() = delete;
+		SwapData(FormIDOrSet a_id, const Input& a_input);
+
+		[[nodiscard]] static FormIDOrSet GetSwapFormID(const std::string& a_str);
+		RE::TESBoundObject* GetSwapBase(const RE::TESObjectREFR* a_ref) const;
+
+		static void GetForms(const std::string& a_path, const std::string& a_str, std::function<void(RE::FormID, SwapData&)> a_func);
+
+		// members
+		FormIDOrSet formIDSet{};
 	};
 }
