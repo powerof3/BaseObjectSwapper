@@ -76,17 +76,21 @@ namespace FormSwap
 		}
 
 	private:
-		[[nodiscard]] static relData<RE::NiPoint3> get_transform_from_string(const std::string& a_str);
-		[[nodiscard]] static std::optional<minMax<float>> get_scale_from_string(const std::string& a_str);
+		[[nodiscard]] static relData<RE::NiPoint3> get_transform_from_string(const std::string& a_str, bool a_convertToRad = false);
+		[[nodiscard]] static minMax<float> get_scale_from_string(const std::string& a_str);
 
-		struct RandInput
+		struct Input
 		{
 			bool trueRandom{ false };
 			RE::FormID refSeed{ 0 };
+
+			bool clamp{ false };
+			float clampMin{ 0.0f };
+			float clampMax{ 0.0f };
 		};
 
-		static float get_random_value(const RandInput& a_input, float a_min, float a_max);
-		static RE::NiPoint3 get_random_value(const RandInput& a_input, const std::pair<RE::NiPoint3, RE::NiPoint3>& a_minMax);
+		static float get_random_value(const Input& a_input, float a_min, float a_max);
+		static RE::NiPoint3 get_random_value(const Input& a_input, const std::pair<RE::NiPoint3, RE::NiPoint3>& a_minMax);
 
 		// members
 		std::optional<relData<RE::NiPoint3>> location{ std::nullopt };
@@ -96,6 +100,7 @@ namespace FormSwap
 		bool useTrueRandom{ false };
 
 		static inline srell::regex transformRegex{ R"(\((.*?),(.*?),(.*?)\))" };
+		static inline srell::regex stringRegex{ R"(,\s*(?![^()]*\)))" };
 
 		friend class TransformData;
 	};
@@ -122,7 +127,7 @@ namespace FormSwap
 		};
 
 		TransformData() = delete;
-        explicit TransformData(const Input& a_input);
+		explicit TransformData(const Input& a_input);
 
 		[[nodiscard]] static RE::FormID GetFormID(const std::string& a_str);
 		bool IsTransformValid(const RE::TESObjectREFR* a_ref) const;

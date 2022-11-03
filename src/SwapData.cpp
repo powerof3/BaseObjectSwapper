@@ -13,56 +13,68 @@ namespace FormSwap
 			if (const auto splitNum = string::split(a_str, R"(/)"); splitNum.size() > 1) {
 				return { get_float(splitNum[0]), get_float(splitNum[1]) };
 			} else {
-				auto num = get_float(splitNum[0]);
+				auto num = get_float(a_str);
 				return { num, num };
 			}
 		}
 	}
 
-	Transform::relData<RE::NiPoint3> Transform::get_transform_from_string(const std::string& a_str)
+	Transform::relData<RE::NiPoint3> Transform::get_transform_from_string(const std::string& a_str, bool a_convertToRad)
 	{
-		bool relative = a_str.contains('R');
 		minMax<RE::NiPoint3> transformData;
 
-		srell::cmatch match;
-		if (srell::regex_search(a_str.c_str(), match, transformRegex)) {
-			const auto [minX, maxX] = detail::get_min_max(match[1].str());  //match[0] gets the whole string
+		const auto get_transform = [&](const std::string& b_str) -> RE::NiPoint2 {
+			auto [min, max] = detail::get_min_max(b_str);
+			return {
+				a_convertToRad ? RE::deg_to_rad(min) : min,
+				a_convertToRad ? RE::deg_to_rad(max) : max
+			};
+		};
+
+		if (srell::cmatch match; srell::regex_search(a_str.c_str(), match, transformRegex)) {
+			auto [minX, maxX] = get_transform(match[1].str());  //match[0] gets the whole string
 			transformData.first.x = minX;
 			transformData.second.x = maxX;
 
-			const auto [minY, maxY] = detail::get_min_max(match[2].str());
+			auto [minY, maxY] = get_transform(match[2].str());
 			transformData.first.y = minY;
 			transformData.second.y = maxY;
 
-			const auto [minZ, maxZ] = detail::get_min_max(match[2].str());
+			const auto [minZ, maxZ] = get_transform(match[3].str());
 			transformData.first.z = minZ;
 			transformData.second.z = maxZ;
 		}
 
-		return std::make_pair(relative, transformData);
+		return { a_str.contains('R'), transformData };
 	}
 
-	std::optional<Transform::minMax<float>> Transform::get_scale_from_string(const std::string& a_str)
+	Transform::minMax<float> Transform::get_scale_from_string(const std::string& a_str)
 	{
 		srell::cmatch match;
 		if (srell::regex_search(a_str.c_str(), match, genericRegex)) {
 			return detail::get_min_max(match[1].str());
 		}
 
-		return minMax<float>{ 1.0f, 1.0f };
+		return minMax<float>{ 0.0f, 0.0f };
 	}
 
-	float Transform::get_random_value(const RandInput& a_input, float a_min, float a_max)
+	float Transform::get_random_value(const Input& a_input, float a_min, float a_max)
 	{
-		if (stl::numeric::essentially_equal(a_min, a_max)) {
-			return a_min;
+		float value = a_min;
+
+		if (!stl::numeric::essentially_equal(a_min, a_max)) {
+			value = a_input.trueRandom ? staticRNG.Generate(a_min, a_max) :
+			                             SeedRNG(a_input.refSeed).Generate(a_min, a_max);
 		}
 
-		return a_input.trueRandom ? staticRNG.Generate(a_min, a_max) :
-		                            SeedRNG(a_input.refSeed).Generate(a_min, a_max);
+		if (a_input.clamp) {
+			value = std::clamp(value, a_input.clampMin, a_input.clampMax);
+		}
+
+		return value;
 	}
 
-	RE::NiPoint3 Transform::get_random_value(const RandInput& a_input, const std::pair<RE::NiPoint3, RE::NiPoint3>& a_minMax)
+	RE::NiPoint3 Transform::get_random_value(const Input& a_input, const std::pair<RE::NiPoint3, RE::NiPoint3>& a_minMax)
 	{
 		auto& [min, max] = a_minMax;
 
@@ -79,13 +91,23 @@ namespace FormSwap
 
 	Transform::Transform(const std::string& a_str)
 	{
+		// ignore commas within parentheses
+		const auto get_split_transform = [&]() -> std::vector<std::string> {
+			srell::sregex_token_iterator iter(a_str.begin(),
+				a_str.end(),
+				stringRegex,
+				-1);
+			srell::sregex_token_iterator end{};
+			return { iter, end };
+		};
+
 		if (!a_str.empty() && !string::icontains(a_str, "NONE")) {
-			const auto transformStrs = string::split(a_str, ",");
+			const auto transformStrs = get_split_transform();
 			for (auto& transformStr : transformStrs) {
 				if (transformStr.contains("pos")) {
 					location = get_transform_from_string(transformStr);
 				} else if (transformStr.contains("rot")) {
-					rotation = get_transform_from_string(transformStr);
+					rotation = get_transform_from_string(transformStr, true);
 				} else if (transformStr.contains("scale")) {
 					refScale = get_scale_from_string(transformStr);
 				}
@@ -96,7 +118,7 @@ namespace FormSwap
 	void Transform::SetTransform(RE::TESObjectREFR* a_refr) const
 	{
 		if (location || rotation || refScale) {
-			const RandInput input(useTrueRandom, a_refr->GetFormID());
+			Input input(useTrueRandom, a_refr->GetFormID());
 			if (location) {
 				auto& [relative, minMax] = *location;
 				if (relative) {
@@ -106,6 +128,10 @@ namespace FormSwap
 				}
 			}
 			if (rotation) {
+				input.clamp = true;
+				input.clampMin = -RE::NI_TWO_PI;
+				input.clampMax = RE::NI_TWO_PI;
+
 				auto& [relative, minMax] = *rotation;
 				if (relative) {
 					a_refr->data.angle += get_random_value(input, minMax);
@@ -114,27 +140,29 @@ namespace FormSwap
 				}
 			}
 			if (refScale) {
+				input.clamp = true;
+				input.clampMin = 0.0f;
+				input.clampMax = 1000.0f;
+
 				auto& [min, max] = *refScale;
-				const auto scale = std::clamp(get_random_value(input, min, max), 0.0f, 1000.0f);
-				a_refr->refScale = static_cast<std::uint16_t>(a_refr->refScale * scale);
+				a_refr->refScale *= static_cast<std::uint16_t>(get_random_value(input, min, max));
 			}
 		}
 	}
 
-    bool Transform::IsValid() const
-    {
-	    return location || rotation || refScale;
-    }
+	bool Transform::IsValid() const
+	{
+		return location || rotation || refScale;
+	}
 
-    Traits::Traits(const std::string& a_str)
+	Traits::Traits(const std::string& a_str)
 	{
 		if (!a_str.empty() && !string::icontains(a_str, "NONE")) {
 			if (a_str.contains("chance")) {
 				if (a_str.contains("R")) {
 					trueRandom = true;
 				}
-				srell::cmatch match;
-				if (srell::regex_search(a_str.c_str(), match, genericRegex)) {
+				if (srell::cmatch match; srell::regex_search(a_str.c_str(), match, genericRegex)) {
 					chance = string::lexical_cast<std::uint32_t>(match[1].str());
 				}
 			}
@@ -159,20 +187,14 @@ namespace FormSwap
 
 	RE::FormID TransformData::GetFormID(const std::string& a_str)
 	{
-		if (a_str.contains('~')) {
-			RE::TESForm* form = nullptr;
-			if (const auto splitID = string::split(a_str, "~"); splitID.size() == 2) {
-				const auto formID = string::lexical_cast<RE::FormID>(splitID[0], true);
-				const auto& modName = splitID[1];
-				if (g_mergeMapperInterface) {
-					const auto [mergedModName, mergedFormID] = g_mergeMapperInterface->GetNewFormID(modName.c_str(), formID);
-					form = RE::TESDataHandler::GetSingleton()->LookupForm(mergedFormID, mergedModName);
-				} else {
-					form = RE::TESDataHandler::GetSingleton()->LookupForm(formID, modName);
-				}
-			}
-			if (form) {
-				return form->GetFormID();
+		if (const auto splitID = string::split(a_str, "~"); splitID.size() == 2) {
+			const auto formID = string::lexical_cast<RE::FormID>(splitID[0], true);
+			const auto& modName = splitID[1];
+			if (g_mergeMapperInterface) {
+				const auto [mergedModName, mergedFormID] = g_mergeMapperInterface->GetNewFormID(modName.c_str(), formID);
+				return RE::TESDataHandler::GetSingleton()->LookupFormID(mergedFormID, mergedModName);
+			} else {
+				return RE::TESDataHandler::GetSingleton()->LookupFormID(formID, modName);
 			}
 		}
 		if (const auto form = RE::TESForm::LookupByEditorID(a_str)) {
@@ -198,8 +220,8 @@ namespace FormSwap
 		}
 	}
 
-    bool TransformData::IsTransformValid(const RE::TESObjectREFR* a_ref) const
-    {
+	bool TransformData::IsTransformValid(const RE::TESObjectREFR* a_ref) const
+	{
 		auto seededRNG = SeedRNG(a_ref->GetFormID());
 
 		if (traits.chance != 100) {
@@ -211,9 +233,9 @@ namespace FormSwap
 		}
 
 		return transform.IsValid();
-    }
+	}
 
-    FormIDOrSet SwapData::GetSwapFormID(const std::string& a_str)
+	FormIDOrSet SwapData::GetSwapFormID(const std::string& a_str)
 	{
 		if (a_str.contains(",")) {
 			FormIDSet set;
