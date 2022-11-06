@@ -54,8 +54,6 @@ namespace FormSwap
 		void get_transforms(const std::string& a_path, const std::string& a_str);
 		void get_transforms(const std::string& a_path, const std::string& a_str, const std::vector<FormIDStr>& a_conditionalIDs);
 
-		bool log_conflicts(RE::FormID a_baseID, TransformDataVec& a_vec);
-
 		bool get_conditional_result(const FormIDStr& a_data, const ConditionalInput& a_input) const;
 
 		SwapMap<SwapDataVec> swapForms{};
