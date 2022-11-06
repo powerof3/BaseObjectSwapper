@@ -7,7 +7,7 @@ namespace FormSwap
 		static Transform::minMax<float> get_min_max(const std::string& a_str)
 		{
 			constexpr auto get_float = [](const std::string& str) {
-				return string::lexical_cast<float>(str);
+				return string::to_num<float>(str);
 			};
 
 			if (const auto splitNum = string::split(a_str, R"(/)"); splitNum.size() > 1) {
@@ -101,7 +101,7 @@ namespace FormSwap
 			return { iter, end };
 		};
 
-		if (!a_str.empty() && !string::icontains(a_str, "NONE")) {
+		if (clib_util::config::is_valid_entry(a_str)) {
 			const auto transformStrs = get_split_transform();
 			for (auto& transformStr : transformStrs) {
 				if (transformStr.contains("pos")) {
@@ -145,7 +145,7 @@ namespace FormSwap
 				input.clampMax = 1000.0f;
 
 				auto& [min, max] = *refScale;
-				a_refr->refScale *= static_cast<std::uint16_t>(get_random_value(input, min, max));
+				a_refr->refScale = static_cast<std::uint16_t>(a_refr->refScale * get_random_value(input, min, max));
 			}
 		}
 	}
@@ -157,13 +157,13 @@ namespace FormSwap
 
 	Traits::Traits(const std::string& a_str)
 	{
-		if (!a_str.empty() && !string::icontains(a_str, "NONE")) {
+		if (clib_util::config::is_valid_entry(a_str)) {
 			if (a_str.contains("chance")) {
 				if (a_str.contains("R")) {
 					trueRandom = true;
 				}
 				if (srell::cmatch match; srell::regex_search(a_str.c_str(), match, genericRegex)) {
-					chance = string::lexical_cast<std::uint32_t>(match[1].str());
+					chance = string::to_num<std::uint32_t>(match[1].str());
 				}
 			}
 		}
@@ -188,7 +188,7 @@ namespace FormSwap
 	RE::FormID TransformData::GetFormID(const std::string& a_str)
 	{
 		if (const auto splitID = string::split(a_str, "~"); splitID.size() == 2) {
-			const auto formID = string::lexical_cast<RE::FormID>(splitID[0], true);
+			const auto formID = string::to_num<RE::FormID>(splitID[0], true);
 			const auto& modName = splitID[1];
 			if (g_mergeMapperInterface) {
 				const auto [mergedModName, mergedFormID] = g_mergeMapperInterface->GetNewFormID(modName.c_str(), formID);
@@ -225,8 +225,8 @@ namespace FormSwap
 		auto seededRNG = SeedRNG(a_ref->GetFormID());
 
 		if (traits.chance != 100) {
-			const auto rng = traits.trueRandom ? staticRNG.Generate() :
-			                                     seededRNG.Generate();
+			const auto rng = traits.trueRandom ? staticRNG.Generate<std::uint32_t>(0, 100) :
+			                                     seededRNG.Generate<std::uint32_t>(0, 100);
 			if (rng > traits.chance) {
 				return false;
 			}
@@ -259,8 +259,8 @@ namespace FormSwap
 		auto seededRNG = SeedRNG(a_ref->GetFormID());
 
 		if (traits.chance != 100) {
-			const auto rng = traits.trueRandom ? staticRNG.Generate() :
-			                                     seededRNG.Generate();
+			const auto rng = traits.trueRandom ? staticRNG.Generate<std::uint32_t>(0, 100) :
+			                                     seededRNG.Generate<std::uint32_t>(0, 100);
 			if (rng > traits.chance) {
 				return nullptr;
 			}

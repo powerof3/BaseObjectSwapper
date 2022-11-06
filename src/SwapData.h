@@ -22,39 +22,7 @@ namespace FormSwap
 
 	inline srell::regex genericRegex{ R"(\((.*?)\))" };
 
-	class SeedRNG
-	{
-	public:
-		SeedRNG() = delete;
-		explicit SeedRNG(const std::uint64_t a_seed) :
-			rng(a_seed)
-		{}
-		explicit SeedRNG(const RE::FormID a_seed) :
-			rng(a_seed)
-		{}
-
-		template <class T, class = std::enable_if_t<std::is_arithmetic_v<T>>>
-		T Generate(T a_min, T a_max)
-		{
-			if constexpr (std::is_integral_v<T>) {
-				std::uniform_int_distribution<T> distr(a_min, a_max);
-				return distr(rng);
-			} else {
-				std::uniform_real_distribution<T> distr(a_min, a_max);
-				return distr(rng);
-			}
-		}
-
-		std::uint32_t Generate()
-		{
-			return Generate<std::uint32_t>(0, 100);
-		}
-
-	private:
-		XoshiroCpp::Xoshiro256StarStar rng;
-	};
-
-	inline SeedRNG staticRNG(static_cast<std::uint64_t>(std::chrono::steady_clock::now().time_since_epoch().count()));
+	inline SeedRNG staticRNG;
 
 	class Transform
 	{

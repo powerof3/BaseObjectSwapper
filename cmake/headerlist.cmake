@@ -3,5 +3,4 @@ set(headers ${headers}
 	src/Manager.h
 	src/PCH.h
 	src/SwapData.h
-	src/XoshiroCpp.hpp
 )

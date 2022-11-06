@@ -49,16 +49,7 @@ namespace FormSwap
 
 		logger::info("{:*^30}", "INI");
 
-		std::vector<std::string> configs;
-
-		auto constexpr folder = R"(Data\)";
-		for (const auto& entry : std::filesystem::directory_iterator(folder)) {
-			if (entry.exists() && !entry.path().empty() && entry.path().extension() == ".ini"sv) {
-				if (const auto path = entry.path().string(); path.rfind("_SWAP") != std::string::npos) {
-					configs.push_back(path);
-				}
-			}
-		}
+		std::vector<std::string> configs = clib_util::config::get_configs(R"(Data\)", "_SWAP"sv);
 
 		if (configs.empty()) {
 			logger::warn("	No .ini files with _SWAP suffix were found within the Data folder, aborting...");
@@ -66,8 +57,6 @@ namespace FormSwap
 		}
 
 		logger::info("	{} matching inis found", configs.size());
-
-		std::ranges::sort(configs);
 
 		for (auto& path : configs) {
 			logger::info("	INI : {}", path);

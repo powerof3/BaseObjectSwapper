@@ -5,9 +5,14 @@
 #include "RE/Skyrim.h"
 #include "SKSE/SKSE.h"
 
-#include "XoshiroCpp.hpp"
 #include <MergeMapperPluginAPI.h>
 #include <SimpleIni.h>
+
+#include <CLibUtil/config.hpp>
+#include <CLibUtil/numeric.hpp>
+#include <CLibUtil/rng.hpp>
+#include <CLibUtil/string.hpp>
+
 #include <ranges>
 #include <robin_hood.h>
 #include <spdlog/sinks/basic_file_sink.h>
@@ -16,13 +21,16 @@
 #define DLLEXPORT __declspec(dllexport)
 
 namespace logger = SKSE::log;
-namespace string = SKSE::stl::string;
+namespace string = clib_util::string;
 
 using namespace std::literals;
+
+using SeedRNG = clib_util::RNG;
 
 namespace stl
 {
 	using namespace SKSE::stl;
+	using namespace clib_util;
 
 	template <class F, class T>
 	void write_vfunc()
