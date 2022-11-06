@@ -204,12 +204,23 @@ namespace FormSwap
 				switch (form->GetFormType()) {
 				case RE::FormType::Location:
 					{
-						auto location = form->As<RE::BGSLocation>();
+						const auto location = form->As<RE::BGSLocation>();
 						return currentLocation && (currentLocation == location || currentLocation->IsParent(location));
+					}
+				case RE::FormType::Region:
+					{
+						if (const auto region = form->As<RE::TESRegion>()) {
+							if (const auto regionList = cell ? cell->GetRegionList(false) : nullptr) {
+								return std::ranges::any_of(*regionList, [&](const auto& regionInList) {
+									return regionInList && regionInList == region;
+								});
+							}
+						}
+						return false;
 					}
 				case RE::FormType::Keyword:
 					{
-						auto keyword = form->As<RE::BGSKeyword>();
+						const auto keyword = form->As<RE::BGSKeyword>();
 						return currentLocation && currentLocation->HasKeyword(keyword) || ref->HasKeyword(keyword);
 					}
 				default:
@@ -314,7 +325,7 @@ namespace FormSwap
 		SwapResult swapData{ nullptr, std::nullopt };
 
 		// get base
-	    if (!a_ref->IsDynamicForm()) {
+		if (!a_ref->IsDynamicForm()) {
 			swapData = get_swap_base(a_ref, swapRefs);
 		}
 
