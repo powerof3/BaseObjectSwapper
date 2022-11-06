@@ -318,9 +318,14 @@ namespace FormSwap
 			return std::nullopt;
 		};
 
+		constexpr auto has_transform = [](const TransformResult& a_result) {
+			return a_result && a_result->IsValid();
+		};
+
 		SwapResult swapData{ nullptr, std::nullopt };
 
-		if (!a_ref->IsDynamicForm()) {
+		// get base
+	    if (!a_ref->IsDynamicForm()) {
 			swapData = get_swap_base(a_ref, swapRefs);
 		}
 
@@ -332,24 +337,25 @@ namespace FormSwap
 			swapData = get_swap_base(a_base, swapForms);
 		}
 
-		if (!swapData.second && !a_ref->IsDynamicForm()) {
-			swapData.second = get_transform(a_ref);
-		}
-
-		if (!swapData.second) {
-			swapData.second = GetTransformConditional(a_ref, a_base);
-		}
-
-		if (!swapData.second) {
-			swapData.second = get_transform(a_base);
-		}
-
 		if (const auto swapLvlBase = swapData.first ? swapData.first->As<RE::TESLevItem>() : nullptr) {
 			RE::BSScrapArray<RE::CALCED_OBJECT> calcedObjects{};
 			swapLvlBase->CalculateCurrentFormList(a_ref->GetCalcLevel(false), 1, calcedObjects, 0, true);
 			if (!calcedObjects.empty()) {
 				swapData.first = static_cast<RE::TESBoundObject*>(calcedObjects.front().form);
 			}
+		}
+
+		// get transforms
+		if (!has_transform(swapData.second) && !a_ref->IsDynamicForm()) {
+			swapData.second = get_transform(a_ref);
+		}
+
+		if (!has_transform(swapData.second)) {
+			swapData.second = GetTransformConditional(a_ref, a_base);
+		}
+
+		if (!has_transform(swapData.second)) {
+			swapData.second = get_transform(a_base);
 		}
 
 		return swapData;
