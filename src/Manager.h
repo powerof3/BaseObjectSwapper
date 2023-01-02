@@ -27,7 +27,7 @@ namespace FormSwap
 			return std::addressof(singleton);
 		}
 
-		bool LoadFormsOnce();
+		void LoadFormsOnce();
 
 		void PrintConflicts() const;
 
@@ -46,15 +46,17 @@ namespace FormSwap
 		Manager& operator=(Manager&&) = delete;
 
 	private:
-		SwapMap<SwapDataVec>& get_form_map(const std::string& a_str);
+		void LoadForms();
 
-        static void get_forms(const std::string& a_path, const std::string& a_str, SwapMap<SwapDataVec>& a_map);
+	    SwapMap<SwapDataVec>& get_form_map(const std::string& a_str);
+
+        void get_forms(const std::string& a_path, const std::string& a_str, SwapMap<SwapDataVec>& a_map);
 		void get_forms(const std::string& a_path, const std::string& a_str, const std::vector<FormIDStr>& a_conditionalIDs);
 
 		void get_transforms(const std::string& a_path, const std::string& a_str);
 		void get_transforms(const std::string& a_path, const std::string& a_str, const std::vector<FormIDStr>& a_conditionalIDs);
 
-		bool get_conditional_result(const FormIDStr& a_data, const ConditionalInput& a_input) const;
+        [[nodiscard]] bool get_conditional_result(const FormIDStr& a_data, const ConditionalInput& a_input) const;
 
 		SwapMap<SwapDataVec> swapForms{};
 		SwapMap<SwapDataVec> swapRefs{};
@@ -64,6 +66,6 @@ namespace FormSwap
 		SwapMap<TransformDataConditional> transformsConditional{};
 
 		bool hasConflicts{ false };
-		std::atomic_bool init{ false };
+		std::once_flag init{};
 	};
 }
