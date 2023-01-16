@@ -39,27 +39,28 @@ namespace FormSwap
 		});
 	}
 
-	bool Manager::LoadFormsOnce()
+	void Manager::LoadFormsOnce()
 	{
-		if (init) {
-			return true;
-		}
+		std::call_once(init, [this] {
+			LoadForms();
+		});
+	}
 
-		init = true;
-
+	void Manager::LoadForms()
+	{
 		logger::info("{:*^30}", "INI");
 
 		std::vector<std::string> configs = clib_util::config::get_configs(R"(Data\)", "_SWAP"sv);
 
 		if (configs.empty()) {
-			logger::warn("	No .ini files with _SWAP suffix were found within the Data folder, aborting...");
-			return false;
+			logger::warn("No .ini files with _SWAP suffix were found within the Data folder, aborting...");
+			return;
 		}
 
-		logger::info("	{} matching inis found", configs.size());
+		logger::info("{} matching inis found", configs.size());
 
 		for (auto& path : configs) {
-			logger::info("	INI : {}", path);
+			logger::info("\tINI : {}", path);
 
 			CSimpleIniA ini;
 			ini.SetUnicode();
@@ -67,7 +68,7 @@ namespace FormSwap
 			ini.SetAllowKeyOnly();
 
 			if (const auto rc = ini.LoadFile(path.c_str()); rc < 0) {
-				logger::error("	couldn't read INI");
+				logger::error("\tcouldn't read INI");
 				continue;
 			}
 
@@ -79,7 +80,7 @@ namespace FormSwap
 				if (const auto processedID = SwapData::GetFormID(a_condition); processedID != 0) {
 					a_processedFilters.emplace_back(processedID);
 				} else {
-					logger::error("		Filter  [{}] INFO - unable to find form, treating filter as string", a_condition);
+					logger::error("\t\tFilter  [{}] INFO - unable to find form, treating filter as string", a_condition);
 					a_processedFilters.emplace_back(a_condition);
 				}
 			};
@@ -89,7 +90,7 @@ namespace FormSwap
 					auto splitSection = string::split(section, "|");
 					auto conditions = string::split(splitSection[1], ",");  //[Forms|EditorID,EditorID2]
 
-					logger::info("		reading [{}] : {} conditions", splitSection[0], conditions.size());
+					logger::info("\t\treading [{}] : {} conditions", splitSection[0], conditions.size());
 
 					std::vector<FormIDStr> processedConditions;
 					processedConditions.reserve(conditions.size());
@@ -103,19 +104,19 @@ namespace FormSwap
 
 					if (!values.empty()) {
 						if (splitSection[0] == "Forms") {
-							logger::info("			{} form swaps found", values.size());
+							logger::info("\t\t\t{} form swaps found", values.size());
 							for (const auto& key : values) {
 								get_forms(path, key.pItem, processedConditions);
 							}
 						} else {
-							logger::info("			{} transform overrides found", values.size());
+							logger::info("\t\t\t{} transform overrides found", values.size());
 							for (const auto& key : values) {
 								get_transforms(path, key.pItem, processedConditions);
 							}
 						}
 					}
 				} else {
-					logger::info("		reading [{}]", section);
+					logger::info("\t\treading [{}]", section);
 
 					CSimpleIniA::TNamesDepend values;
 					ini.GetAllKeys(section, values);
@@ -123,12 +124,12 @@ namespace FormSwap
 
 					if (!values.empty()) {
 						if (string::iequals(section, "Transforms")) {
-							logger::info("			{} transform overrides found", values.size());
+							logger::info("\t\t\t{} transform overrides found", values.size());
 							for (const auto& key : values) {
 								get_transforms(path, key.pItem);
 							}
 						} else {
-							logger::info("			{} swaps found", values.size());
+							logger::info("\t\t\t{} swaps found", values.size());
 							auto& map = get_form_map(section);
 							for (const auto& key : values) {
 								get_forms(path, key.pItem, map);
@@ -163,12 +164,12 @@ namespace FormSwap
 					}
 					conflicts = true;
 					auto winningForm = string::split(winningRecord.record, "|");
-					logger::warn("	{}", winningForm[0]);
-					logger::warn("		winning record : {} ({})", winningForm[1], swapDataVec.back().path);
-					logger::warn("		{} conflicts", swapDataVec.size() - 1);
+					logger::warn("\t{}", winningForm[0]);
+					logger::warn("\t\twinning record : {} ({})", winningForm[1], swapDataVec.back().path);
+					logger::warn("\t\t{} conflicts", swapDataVec.size() - 1);
 					for (auto it = swapDataVec.rbegin() + 1; it != swapDataVec.rend(); ++it) {
 						auto losingRecord = it->record.substr(it->record.find('|') + 1);
-						logger::warn("			{} ({})", losingRecord, it->path);
+						logger::warn("\t\t\t{} ({})", losingRecord, it->path);
 					}
 				}
 			}
@@ -184,8 +185,6 @@ namespace FormSwap
 		log_conflicts("Transforms"sv, transforms);
 
 		logger::info("{:*^30}", "END");
-
-		return !swapForms.empty() || !swapFormsConditional.empty() || !swapRefs.empty() || transforms.empty() || transformsConditional.empty();
 	}
 
 	void Manager::PrintConflicts() const
@@ -197,10 +196,10 @@ namespace FormSwap
 
 	bool Manager::get_conditional_result(const FormIDStr& a_data, const ConditionalInput& a_input) const
 	{
-		const auto& [ref, base, cell, currentLocation] = a_input;
+		const auto& [ref, base, currentCell, currentLocation] = a_input;
 
 		if (std::holds_alternative<RE::FormID>(a_data)) {
-			if (auto form = RE::TESForm::LookupByID(std::get<RE::FormID>(a_data)); form) {
+			if (const auto form = RE::TESForm::LookupByID(std::get<RE::FormID>(a_data)); form) {
 				switch (form->GetFormType()) {
 				case RE::FormType::Location:
 					{
@@ -210,7 +209,7 @@ namespace FormSwap
 				case RE::FormType::Region:
 					{
 						if (const auto region = form->As<RE::TESRegion>()) {
-							if (const auto regionList = cell ? cell->GetRegionList(false) : nullptr) {
+							if (const auto regionList = currentCell ? currentCell->GetRegionList(false) : nullptr) {
 								return std::ranges::any_of(*regionList, [&](const auto& regionInList) {
 									return regionInList && regionInList == region;
 								});
@@ -223,13 +222,17 @@ namespace FormSwap
 						const auto keyword = form->As<RE::BGSKeyword>();
 						return currentLocation && currentLocation->HasKeyword(keyword) || ref->HasKeyword(keyword);
 					}
+				case RE::FormType::Cell:
+					{
+						return currentCell == form;
+					}
 				default:
 					break;
 				}
 			}
 		} else {
 			const std::string editorID = std::get<std::string>(a_data);
-			if (cell && cell->GetFormEditorID() == editorID) {
+			if (currentCell && string::iequals(currentCell->GetFormEditorID(), editorID)) {
 				return true;
 			}
 			if (currentLocation && currentLocation->HasKeywordString(editorID)) {
