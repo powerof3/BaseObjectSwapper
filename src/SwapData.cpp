@@ -101,7 +101,7 @@ namespace FormSwap
 			return { iter, end };
 		};
 
-		if (clib_util::config::is_valid_entry(a_str)) {
+		if (dist::is_valid_entry(a_str)) {
 			const auto transformStrs = get_split_transform();
 			for (auto& transformStr : transformStrs) {
 				if (transformStr.contains("pos")) {
@@ -157,14 +157,12 @@ namespace FormSwap
 
 	Traits::Traits(const std::string& a_str)
 	{
-		if (clib_util::config::is_valid_entry(a_str)) {
-			if (a_str.contains("chance")) {
-				if (a_str.contains("R")) {
-					trueRandom = true;
-				}
-				if (srell::cmatch match; srell::regex_search(a_str.c_str(), match, genericRegex)) {
-					chance = string::to_num<std::uint32_t>(match[1].str());
-				}
+		if (dist::is_valid_entry(a_str) && a_str.contains("chance")) {
+			if (a_str.contains("R")) {
+				trueRandom = true;
+			}
+			if (srell::cmatch match; srell::regex_search(a_str.c_str(), match, genericRegex)) {
+				chance = string::to_num<std::uint32_t>(match[1].str());
 			}
 		}
 	}
@@ -188,7 +186,7 @@ namespace FormSwap
 	RE::FormID TransformData::GetFormID(const std::string& a_str)
 	{
 		if (const auto splitID = string::split(a_str, "~"); splitID.size() == 2) {
-			const auto formID = string::to_num<RE::FormID>(splitID[0], true);
+			const auto  formID = string::to_num<RE::FormID>(splitID[0], true);
 			const auto& modName = splitID[1];
 			if (g_mergeMapperInterface) {
 				const auto [mergedModName, mergedFormID] = g_mergeMapperInterface->GetNewFormID(modName.c_str(), formID);
@@ -216,7 +214,7 @@ namespace FormSwap
 			TransformData transformData(input);
 			a_func(baseFormID, transformData);
 		} else {
-			logger::error("			failed to process {} (BASE formID not found)", a_str);
+			logger::error("\t\t\tfailed to process {} (BASE formID not found)", a_str);
 		}
 	}
 
@@ -238,14 +236,14 @@ namespace FormSwap
 	FormIDOrSet SwapData::GetSwapFormID(const std::string& a_str)
 	{
 		if (a_str.contains(",")) {
-			FormIDSet set;
+			FormIDSet  set;
 			const auto IDStrs = string::split(a_str, ",");
 			set.reserve(IDStrs.size());
 			for (auto& IDStr : IDStrs) {
 				if (auto formID = GetFormID(IDStr); formID != 0) {
 					set.emplace(formID);
 				} else {
-					logger::error("			failed to process {} (SWAP formID not found)", IDStr);
+					logger::error("\t\t\tfailed to process {} (SWAP formID not found)", IDStr);
 				}
 			}
 			return set;
@@ -281,6 +279,14 @@ namespace FormSwap
 
 	void SwapData::GetForms(const std::string& a_path, const std::string& a_str, std::function<void(RE::FormID, SwapData&)> a_func)
 	{
+		constexpr auto swap_empty = [](const FormIDOrSet& a_set) {
+			if (const auto formID = std::get_if<RE::FormID>(&a_set); formID) {
+				return *formID == 0;
+			} else {
+				return std::get<FormIDSet>(a_set).empty();
+			}
+		};
+
 		const auto formPair = string::split(a_str, "|");
 
 		if (const auto baseFormID = GetFormID(formPair[0]); baseFormID != 0) {
@@ -293,10 +299,10 @@ namespace FormSwap
 				SwapData swapData(swapFormID, input);
 				a_func(baseFormID, swapData);
 			} else {
-				logger::error("			failed to process {} (SWAP formID not found)", a_str);
+				logger::error("\t\t\tfailed to process {} (SWAP formID not found)", a_str);
 			}
 		} else {
-			logger::error("			failed to process {} (BASE formID not found)", a_str);
+			logger::error("\t\t\tfailed to process {} (BASE formID not found)", a_str);
 		}
 	}
 }

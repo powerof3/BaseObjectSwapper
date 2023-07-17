@@ -50,7 +50,7 @@ namespace FormSwap
 	{
 		logger::info("{:*^30}", "INI");
 
-		std::vector<std::string> configs = clib_util::config::get_configs(R"(Data\)", "_SWAP"sv);
+		std::vector<std::string> configs = dist::get_configs(R"(Data\)", "_SWAP"sv);
 
 		if (configs.empty()) {
 			logger::warn("No .ini files with _SWAP suffix were found within the Data folder, aborting...");
@@ -297,7 +297,17 @@ namespace FormSwap
 		return std::nullopt;
 	}
 
-	SwapResult Manager::GetSwapData(const RE::TESObjectREFR* a_ref, const RE::TESForm* a_base)
+    void Manager::InsertLeveledItemRef(const RE::TESObjectREFR* a_refr)
+	{
+		swappedLeveledItemRefs.insert(a_refr->GetFormID());
+	}
+
+    bool Manager::IsLeveledItemRefSwapped(const RE::TESObjectREFR* a_refr) const
+    {
+		return swappedLeveledItemRefs.contains(a_refr->GetFormID());
+	}
+
+    SwapResult Manager::GetSwapData(const RE::TESObjectREFR* a_ref, const RE::TESForm* a_base)
 	{
 		const auto get_swap_base = [a_ref](const RE::TESForm* a_form, const SwapMap<SwapDataVec>& a_map) -> SwapResult {
 			if (const auto it = a_map.find(a_form->GetFormID()); it != a_map.end()) {

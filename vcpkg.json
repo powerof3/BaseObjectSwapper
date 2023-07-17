@@ -1,6 +1,6 @@
 {
   "name": "base-object-swapper",
-  "version-string": "2.5.1",
+  "version-string": "2.6.0",
   "description": "Base Object Swapper",
   "homepage": "",
   "license": "MIT",
@@ -8,10 +8,9 @@
     "boost-stl-interfaces",
     "clib-util",
     "mergemapper",
-    "robin-hood-hashing",
+    "unordered-dense",
     "rsm-binary-io",
     "srell",
-    "simpleini",
     "spdlog",
     "xbyak"
   ]
