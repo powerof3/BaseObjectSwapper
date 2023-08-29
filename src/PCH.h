@@ -33,11 +33,6 @@ using namespace std::literals;
 using namespace clib_util::singleton;
 using SeedRNG = clib_util::RNG;
 
-template <class K, class D>
-using Map = ankerl::unordered_dense::map<K, D>;
-template <class T>
-using Set = ankerl::unordered_dense::set<T>;
-
 namespace stl
 {
 	using namespace SKSE::stl;
@@ -72,3 +67,4 @@ namespace stl
 #endif
 
 #include "Version.h"
+#include "Defs.h"

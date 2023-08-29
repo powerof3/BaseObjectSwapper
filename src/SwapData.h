@@ -2,21 +2,22 @@
 
 namespace FormSwap
 {
-	using FormIDStr = std::variant<RE::FormID, std::string>;
-	using FormIDSet = Set<RE::FormID>;
-	using FormIDOrSet = std::variant<RE::FormID, FormIDSet>;
-
 	inline srell::regex genericRegex{ R"(\((.*?)\))" };
 	inline SeedRNG      staticRNG{};
+
+	struct Traits
+	{
+		Traits() = default;
+		explicit Traits(const std::string& a_str);
+
+		// members
+		bool          trueRandom{ false };
+		std::uint32_t chance{ 100 };
+	};
 
 	class Transform
 	{
 	public:
-		template <class T>
-		using minMax = std::pair<T, T>;
-		template <class T>
-		using relData = std::pair<bool, minMax<T>>;  //relative vs absolute
-
 		Transform() = default;
 		explicit Transform(const std::string& a_str);
 
@@ -56,16 +57,6 @@ namespace FormSwap
 		static inline srell::regex stringRegex{ R"(,\s*(?![^()]*\)))" };
 
 		friend class TransformData;
-	};
-
-	struct Traits
-	{
-		Traits() = default;
-		explicit Traits(const std::string& a_str);
-
-		// members
-		bool          trueRandom{ false };
-		std::uint32_t chance{ 100 };
 	};
 
 	class TransformData
@@ -109,4 +100,13 @@ namespace FormSwap
 		// members
 		FormIDOrSet formIDSet{};
 	};
+
+	using SwapDataVec = std::vector<SwapData>;
+	using TransformDataVec = std::vector<TransformData>;
+
+	using SwapDataConditional = Map<FormIDStr, SwapDataVec>;
+	using TransformDataConditional = Map<FormIDStr, TransformDataVec>;
+
+	using TransformResult = std::optional<Transform>;
+	using SwapResult = std::pair<RE::TESBoundObject*, TransformResult>;
 }

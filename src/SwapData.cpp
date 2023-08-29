@@ -220,11 +220,9 @@ namespace FormSwap
 
 	bool TransformData::IsTransformValid(const RE::TESObjectREFR* a_ref) const
 	{
-		auto seededRNG = SeedRNG(a_ref->GetFormID());
-
 		if (traits.chance != 100) {
 			const auto rng = traits.trueRandom ? staticRNG.Generate<std::uint32_t>(0, 100) :
-			                                     seededRNG.Generate<std::uint32_t>(0, 100);
+			                                     SeedRNG(a_ref->GetFormID()).Generate<std::uint32_t>(0, 100);
 			if (rng > traits.chance) {
 				return false;
 			}

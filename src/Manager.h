@@ -4,19 +4,23 @@
 
 namespace FormSwap
 {
-	template <class T>
-	using SwapMap = Map<RE::FormID, T>;
+	struct ConditionalInput
+	{
+		ConditionalInput(const RE::TESObjectREFR* a_ref, const RE::TESForm* a_form) :
+			ref(a_ref),
+			base(a_form),
+			currentCell(a_ref->GetSaveParentCell()),
+			currentLocation(a_ref->GetCurrentLocation())
+		{}
 
-	using SwapDataVec = std::vector<SwapData>;
-	using TransformDataVec = std::vector<TransformData>;
+		[[nodiscard]] bool IsValid(const FormIDStr& a_data) const;
 
-	using SwapDataConditional = Map<FormIDStr, SwapDataVec>;
-	using TransformDataConditional = Map<FormIDStr, TransformDataVec>;
-
-	using ConditionalInput = std::tuple<const RE::TESObjectREFR*, const RE::TESForm*, RE::TESObjectCELL*, RE::BGSLocation*>;
-
-	using TransformResult = std::optional<Transform>;
-	using SwapResult = std::pair<RE::TESBoundObject*, TransformResult>;
+		// members
+		const RE::TESObjectREFR* ref;
+		const RE::TESForm*       base;
+		RE::TESObjectCELL*       currentCell;
+		RE::BGSLocation*         currentLocation;
+	};
 
 	class Manager : public ISingleton<Manager>
 	{
@@ -35,15 +39,12 @@ namespace FormSwap
 		void LoadForms();
 
 		SwapMap<SwapDataVec>& get_form_map(const std::string& a_str);
+		static void           get_forms(const std::string& a_path, const std::string& a_str, SwapMap<SwapDataVec>& a_map);
+		void                  get_forms(const std::string& a_path, const std::string& a_str, const std::vector<FormIDStr>& a_conditionalIDs);
+		void                  get_transforms(const std::string& a_path, const std::string& a_str);
+		void                  get_transforms(const std::string& a_path, const std::string& a_str, const std::vector<FormIDStr>& a_conditionalIDs);
 
-		static void get_forms(const std::string& a_path, const std::string& a_str, SwapMap<SwapDataVec>& a_map);
-		void        get_forms(const std::string& a_path, const std::string& a_str, const std::vector<FormIDStr>& a_conditionalIDs);
-
-		void get_transforms(const std::string& a_path, const std::string& a_str);
-		void get_transforms(const std::string& a_path, const std::string& a_str, const std::vector<FormIDStr>& a_conditionalIDs);
-
-		[[nodiscard]] bool get_conditional_result(const FormIDStr& a_data, const ConditionalInput& a_input) const;
-
+		// members
 		SwapMap<SwapDataVec>         swapForms{};
 		SwapMap<SwapDataVec>         swapRefs{};
 		SwapMap<SwapDataConditional> swapFormsConditional{};
