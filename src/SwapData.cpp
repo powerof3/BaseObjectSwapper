@@ -69,7 +69,7 @@ namespace FormSwap
 			return detail::get_min_max(match[1].str());
 		}
 
-		return MinMax{ 0.0f, 0.0f };
+		return MinMax<float>{ 0.0f, 0.0f };
 	}
 
 	float Transform::get_random_value(const Input& a_input, float a_min, float a_max)
