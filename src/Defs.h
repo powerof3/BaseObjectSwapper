@@ -1,9 +1,9 @@
 #pragma once
 
 template <class T>
-using minMax = std::pair<T, T>;
+using MinMax = std::pair<T, T>;
 template <class T>
-using relData = std::pair<bool, minMax<T>>;  //relative vs absolute
+using RelData = std::pair<bool, MinMax<T>>;  //relative vs absolute
 
 template <class K, class D>
 using Map = ankerl::unordered_dense::map<K, D>;

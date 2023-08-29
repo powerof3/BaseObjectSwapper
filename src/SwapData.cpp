@@ -4,7 +4,7 @@ namespace FormSwap
 {
 	namespace detail
 	{
-		static Transform::minMax<float> get_min_max(const std::string& a_str)
+		static MinMax<float> get_min_max(const std::string& a_str)
 		{
 			constexpr auto get_float = [](const std::string& str) {
 				return string::to_num<float>(str);
@@ -19,9 +19,23 @@ namespace FormSwap
 		}
 	}
 
-	Transform::relData<RE::NiPoint3> Transform::get_transform_from_string(const std::string& a_str, bool a_convertToRad)
+	Traits::Traits(const std::string& a_str)
 	{
-		minMax<RE::NiPoint3> transformData;
+		if (dist::is_valid_entry(a_str)) {
+			if (a_str.contains("chance")) {
+				if (a_str.contains("R")) {
+					trueRandom = true;
+				}
+				if (srell::cmatch match; srell::regex_search(a_str.c_str(), match, genericRegex)) {
+					chance = string::to_num<std::uint32_t>(match[1].str());
+				}
+			}
+		}
+	}
+
+	RelData<RE::NiPoint3> Transform::get_transform_from_string(const std::string& a_str, bool a_convertToRad)
+	{
+		MinMax<RE::NiPoint3> transformData;
 
 		const auto get_transform = [&](const std::string& b_str) -> RE::NiPoint2 {
 			auto [min, max] = detail::get_min_max(b_str);
@@ -48,14 +62,14 @@ namespace FormSwap
 		return { a_str.contains('R'), transformData };
 	}
 
-	Transform::minMax<float> Transform::get_scale_from_string(const std::string& a_str)
+	MinMax<float> Transform::get_scale_from_string(const std::string& a_str)
 	{
 		srell::cmatch match;
 		if (srell::regex_search(a_str.c_str(), match, genericRegex)) {
 			return detail::get_min_max(match[1].str());
 		}
 
-		return minMax<float>{ 0.0f, 0.0f };
+		return MinMax{ 0.0f, 0.0f };
 	}
 
 	float Transform::get_random_value(const Input& a_input, float a_min, float a_max)
@@ -153,18 +167,6 @@ namespace FormSwap
 	bool Transform::IsValid() const
 	{
 		return location || rotation || refScale;
-	}
-
-	Traits::Traits(const std::string& a_str)
-	{
-		if (dist::is_valid_entry(a_str) && a_str.contains("chance")) {
-			if (a_str.contains("R")) {
-				trueRandom = true;
-			}
-			if (srell::cmatch match; srell::regex_search(a_str.c_str(), match, genericRegex)) {
-				chance = string::to_num<std::uint32_t>(match[1].str());
-			}
-		}
 	}
 
 	TransformData::TransformData(const Input& a_input) :

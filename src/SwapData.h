@@ -26,12 +26,12 @@ namespace FormSwap
 
 		bool operator==(Transform const& a_rhs) const
 		{
-			return location && a_rhs.location || rotation && a_rhs.location || refScale && a_rhs.refScale;
+			return location && a_rhs.location || rotation && a_rhs.rotation || refScale && a_rhs.refScale;
 		}
 
 	private:
-		[[nodiscard]] static relData<RE::NiPoint3> get_transform_from_string(const std::string& a_str, bool a_convertToRad = false);
-		[[nodiscard]] static minMax<float>         get_scale_from_string(const std::string& a_str);
+		[[nodiscard]] static RelData<RE::NiPoint3> get_transform_from_string(const std::string& a_str, bool a_convertToRad = false);
+		[[nodiscard]] static MinMax<float>         get_scale_from_string(const std::string& a_str);
 
 		struct Input
 		{
@@ -47,9 +47,9 @@ namespace FormSwap
 		static RE::NiPoint3 get_random_value(const Input& a_input, const std::pair<RE::NiPoint3, RE::NiPoint3>& a_minMax);
 
 		// members
-		std::optional<relData<RE::NiPoint3>> location{ std::nullopt };
-		std::optional<relData<RE::NiPoint3>> rotation{ std::nullopt };
-		std::optional<minMax<float>>         refScale{ std::nullopt };
+		std::optional<RelData<RE::NiPoint3>> location{ std::nullopt };
+		std::optional<RelData<RE::NiPoint3>> rotation{ std::nullopt };
+		std::optional<MinMax<float>>         refScale{ std::nullopt };
 
 		bool useTrueRandom{ false };
 
