@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 set(NAME "po3_BaseObjectSwapper" CACHE STRING "")
-set(VERSION 2.5.1 CACHE STRING "")
+set(VERSION 2.6.1 CACHE STRING "")
 set(VR_VERSION 1)
 set(AE_VERSION 1)
 
@@ -133,7 +133,8 @@ else ()
 	)
 endif()
 
-find_path(SIMPLEINI_INCLUDE_DIRS "ConvertUTF.c")
+find_package(unordered_dense CONFIG REQUIRED)
+
 find_path(SRELL_INCLUDE_DIRS "srell.hpp")
 find_path(MERGEMAPPER_INCLUDE_DIRS "MergeMapperPluginAPI.h")
 find_path(CLIBUTIL_INCLUDE_DIRS "CLibUtil/string.hpp")
@@ -189,7 +190,6 @@ target_include_directories(
 	PRIVATE
 		${CMAKE_CURRENT_BINARY_DIR}/include
 		${CMAKE_CURRENT_SOURCE_DIR}/src
-		${SIMPLEINI_INCLUDE_DIRS}
 		${SRELL_INCLUDE_DIRS}
 		${MERGEMAPPER_INCLUDE_DIRS}
 		${CLIBUTIL_INCLUDE_DIRS}
@@ -199,6 +199,7 @@ target_link_libraries(
 	${PROJECT_NAME}
 	PRIVATE
 		${CommonLibName}::${CommonLibName}
+		unordered_dense::unordered_dense
 )
 
 target_precompile_headers(

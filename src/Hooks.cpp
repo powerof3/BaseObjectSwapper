@@ -1,17 +1,22 @@
 #include "Hooks.h"
-#include "Manager.h"
 
 namespace BaseObjectSwapper
 {
 	void detail::swap_base(RE::TESObjectREFR* a_ref)
 	{
-		if (const auto base = a_ref->GetBaseObject(); base) {
+		if (const auto base = a_ref->GetBaseObject()) {
 			FormSwap::Manager::GetSingleton()->LoadFormsOnce();
 
 			const auto& [swapBase, transformData] = FormSwap::Manager::GetSingleton()->GetSwapData(a_ref, base);
+
 			if (swapBase && swapBase != base) {
 				a_ref->SetObjectReference(swapBase);
+
+				if (a_ref->extraList.HasType<RE::ExtraLeveledItemBase>()) {
+					FormSwap::Manager::GetSingleton()->InsertLeveledItemRef(a_ref);
+				}
 			}
+
 			if (transformData) {
 				transformData->SetTransform(a_ref);
 			}
@@ -25,5 +30,9 @@ namespace BaseObjectSwapper
 		InitItemImpl<RE::TESObjectREFR>::Install();
 		InitItemImpl<RE::Hazard>::Install();
 		InitItemImpl<RE::ArrowProjectile>::Install();
+
+		SetObjectReference<RE::TESObjectREFR>::Install();
+		SetObjectReference<RE::Hazard>::Install();
+		SetObjectReference<RE::ArrowProjectile>::Install();
 	}
 }

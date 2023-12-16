@@ -1,6 +1,6 @@
 {
   "name": "base-object-swapper",
-  "version-string": "2.5.1",
+  "version-string": "2.6.1",
   "description": "Base Object Swapper",
   "homepage": "",
   "license": "MIT",
@@ -8,11 +8,17 @@
     "boost-stl-interfaces",
     "clib-util",
     "mergemapper",
-    "robin-hood-hashing",
     "rsm-binary-io",
     "srell",
-    "simpleini",
     "spdlog",
+    "unordered-dense",
     "xbyak"
-  ]
+  ],
+  "overrides": [
+    {
+      "name": "fmt",
+      "version": "9.1.0"
+    }
+  ],
+  "builtin-baseline": "78b61582c9e093fda56a01ebb654be15a0033897"
 }

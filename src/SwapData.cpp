@@ -4,7 +4,7 @@ namespace FormSwap
 {
 	namespace detail
 	{
-		static Transform::minMax<float> get_min_max(const std::string& a_str)
+		static MinMax<float> get_min_max(const std::string& a_str)
 		{
 			constexpr auto get_float = [](const std::string& str) {
 				return string::to_num<float>(str);
@@ -19,9 +19,23 @@ namespace FormSwap
 		}
 	}
 
-	Transform::relData<RE::NiPoint3> Transform::get_transform_from_string(const std::string& a_str, bool a_convertToRad)
+	Traits::Traits(const std::string& a_str)
 	{
-		minMax<RE::NiPoint3> transformData;
+		if (dist::is_valid_entry(a_str)) {
+			if (a_str.contains("chance")) {
+				if (a_str.contains("R")) {
+					trueRandom = true;
+				}
+				if (srell::cmatch match; srell::regex_search(a_str.c_str(), match, genericRegex)) {
+					chance = string::to_num<std::uint32_t>(match[1].str());
+				}
+			}
+		}
+	}
+
+	RelData<RE::NiPoint3> Transform::get_transform_from_string(const std::string& a_str, bool a_convertToRad)
+	{
+		MinMax<RE::NiPoint3> transformData;
 
 		const auto get_transform = [&](const std::string& b_str) -> RE::NiPoint2 {
 			auto [min, max] = detail::get_min_max(b_str);
@@ -48,14 +62,14 @@ namespace FormSwap
 		return { a_str.contains('R'), transformData };
 	}
 
-	Transform::minMax<float> Transform::get_scale_from_string(const std::string& a_str)
+	MinMax<float> Transform::get_scale_from_string(const std::string& a_str)
 	{
 		srell::cmatch match;
 		if (srell::regex_search(a_str.c_str(), match, genericRegex)) {
 			return detail::get_min_max(match[1].str());
 		}
 
-		return minMax<float>{ 0.0f, 0.0f };
+		return MinMax<float>{ 0.0f, 0.0f };
 	}
 
 	float Transform::get_random_value(const Input& a_input, float a_min, float a_max)
@@ -101,7 +115,7 @@ namespace FormSwap
 			return { iter, end };
 		};
 
-		if (clib_util::config::is_valid_entry(a_str)) {
+		if (dist::is_valid_entry(a_str)) {
 			const auto transformStrs = get_split_transform();
 			for (auto& transformStr : transformStrs) {
 				if (transformStr.contains("pos")) {
@@ -155,20 +169,6 @@ namespace FormSwap
 		return location || rotation || refScale;
 	}
 
-	Traits::Traits(const std::string& a_str)
-	{
-		if (clib_util::config::is_valid_entry(a_str)) {
-			if (a_str.contains("chance")) {
-				if (a_str.contains("R")) {
-					trueRandom = true;
-				}
-				if (srell::cmatch match; srell::regex_search(a_str.c_str(), match, genericRegex)) {
-					chance = string::to_num<std::uint32_t>(match[1].str());
-				}
-			}
-		}
-	}
-
 	TransformData::TransformData(const Input& a_input) :
 		transform(a_input.transformStr),
 		traits(a_input.traitsStr),
@@ -188,7 +188,7 @@ namespace FormSwap
 	RE::FormID TransformData::GetFormID(const std::string& a_str)
 	{
 		if (const auto splitID = string::split(a_str, "~"); splitID.size() == 2) {
-			const auto formID = string::to_num<RE::FormID>(splitID[0], true);
+			const auto  formID = string::to_num<RE::FormID>(splitID[0], true);
 			const auto& modName = splitID[1];
 			if (g_mergeMapperInterface) {
 				const auto [mergedModName, mergedFormID] = g_mergeMapperInterface->GetNewFormID(modName.c_str(), formID);
@@ -216,17 +216,15 @@ namespace FormSwap
 			TransformData transformData(input);
 			a_func(baseFormID, transformData);
 		} else {
-			logger::error("			failed to process {} (BASE formID not found)", a_str);
+			logger::error("\t\t\tfailed to process {} (BASE formID not found)", a_str);
 		}
 	}
 
 	bool TransformData::IsTransformValid(const RE::TESObjectREFR* a_ref) const
 	{
-		auto seededRNG = SeedRNG(a_ref->GetFormID());
-
 		if (traits.chance != 100) {
 			const auto rng = traits.trueRandom ? staticRNG.Generate<std::uint32_t>(0, 100) :
-			                                     seededRNG.Generate<std::uint32_t>(0, 100);
+			                                     SeedRNG(a_ref->GetFormID()).Generate<std::uint32_t>(0, 100);
 			if (rng > traits.chance) {
 				return false;
 			}
@@ -238,14 +236,14 @@ namespace FormSwap
 	FormIDOrSet SwapData::GetSwapFormID(const std::string& a_str)
 	{
 		if (a_str.contains(",")) {
-			FormIDSet set;
+			FormIDSet  set;
 			const auto IDStrs = string::split(a_str, ",");
 			set.reserve(IDStrs.size());
 			for (auto& IDStr : IDStrs) {
 				if (auto formID = GetFormID(IDStr); formID != 0) {
 					set.emplace(formID);
 				} else {
-					logger::error("			failed to process {} (SWAP formID not found)", IDStr);
+					logger::error("\t\t\tfailed to process {} (SWAP formID not found)", IDStr);
 				}
 			}
 			return set;
@@ -281,6 +279,14 @@ namespace FormSwap
 
 	void SwapData::GetForms(const std::string& a_path, const std::string& a_str, std::function<void(RE::FormID, SwapData&)> a_func)
 	{
+		constexpr auto swap_empty = [](const FormIDOrSet& a_set) {
+			if (const auto formID = std::get_if<RE::FormID>(&a_set); formID) {
+				return *formID == 0;
+			} else {
+				return std::get<FormIDSet>(a_set).empty();
+			}
+		};
+
 		const auto formPair = string::split(a_str, "|");
 
 		if (const auto baseFormID = GetFormID(formPair[0]); baseFormID != 0) {
@@ -293,10 +299,10 @@ namespace FormSwap
 				SwapData swapData(swapFormID, input);
 				a_func(baseFormID, swapData);
 			} else {
-				logger::error("			failed to process {} (SWAP formID not found)", a_str);
+				logger::error("\t\t\tfailed to process {} (SWAP formID not found)", a_str);
 			}
 		} else {
-			logger::error("			failed to process {} (BASE formID not found)", a_str);
+			logger::error("\t\t\tfailed to process {} (BASE formID not found)", a_str);
 		}
 	}
 }

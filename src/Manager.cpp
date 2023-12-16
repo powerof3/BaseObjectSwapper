@@ -39,6 +39,55 @@ namespace FormSwap
 		});
 	}
 
+	bool ConditionalInput::IsValid(const FormIDStr& a_data) const
+	{
+		if (std::holds_alternative<RE::FormID>(a_data)) {
+			if (const auto form = RE::TESForm::LookupByID(std::get<RE::FormID>(a_data))) {
+				switch (form->GetFormType()) {
+				case RE::FormType::Location:
+					{
+						const auto location = form->As<RE::BGSLocation>();
+						return currentLocation && (currentLocation == location || currentLocation->IsParent(location));
+					}
+				case RE::FormType::Region:
+					{
+						if (const auto region = form->As<RE::TESRegion>()) {
+							if (const auto regionList = currentCell ? currentCell->GetRegionList(false) : nullptr) {
+								return std::ranges::any_of(*regionList, [&](const auto& regionInList) {
+									return regionInList && regionInList == region;
+								});
+							}
+						}
+						return false;
+					}
+				case RE::FormType::Keyword:
+					{
+						const auto keyword = form->As<RE::BGSKeyword>();
+						return currentLocation && currentLocation->HasKeyword(keyword) || ref->HasKeyword(keyword);
+					}
+				case RE::FormType::Cell:
+					{
+						return currentCell == form;
+					}
+				default:
+					break;
+				}
+			}
+		} else {
+			const std::string editorID = std::get<std::string>(a_data);
+			if (currentCell && string::iequals(currentCell->GetFormEditorID(), editorID)) {
+				return true;
+			}
+			if (currentLocation && currentLocation->HasKeywordString(editorID)) {
+				return true;
+			}
+			if (const auto keywordForm = base->As<RE::BGSKeywordForm>()) {
+				return keywordForm->HasKeywordString(editorID);
+			}
+		}
+		return false;
+	}
+
 	void Manager::LoadFormsOnce()
 	{
 		std::call_once(init, [this] {
@@ -50,7 +99,7 @@ namespace FormSwap
 	{
 		logger::info("{:*^30}", "INI");
 
-		std::vector<std::string> configs = clib_util::config::get_configs(R"(Data\)", "_SWAP"sv);
+		std::vector<std::string> configs = dist::get_configs(R"(Data\)", "_SWAP"sv);
 
 		if (configs.empty()) {
 			logger::warn("No .ini files with _SWAP suffix were found within the Data folder, aborting...");
@@ -194,70 +243,13 @@ namespace FormSwap
 		}
 	}
 
-	bool Manager::get_conditional_result(const FormIDStr& a_data, const ConditionalInput& a_input) const
-	{
-		const auto& [ref, base, currentCell, currentLocation] = a_input;
-
-		if (std::holds_alternative<RE::FormID>(a_data)) {
-			if (const auto form = RE::TESForm::LookupByID(std::get<RE::FormID>(a_data)); form) {
-				switch (form->GetFormType()) {
-				case RE::FormType::Location:
-					{
-						const auto location = form->As<RE::BGSLocation>();
-						return currentLocation && (currentLocation == location || currentLocation->IsParent(location));
-					}
-				case RE::FormType::Region:
-					{
-						if (const auto region = form->As<RE::TESRegion>()) {
-							if (const auto regionList = currentCell ? currentCell->GetRegionList(false) : nullptr) {
-								return std::ranges::any_of(*regionList, [&](const auto& regionInList) {
-									return regionInList && regionInList == region;
-								});
-							}
-						}
-						return false;
-					}
-				case RE::FormType::Keyword:
-					{
-						const auto keyword = form->As<RE::BGSKeyword>();
-						return currentLocation && currentLocation->HasKeyword(keyword) || ref->HasKeyword(keyword);
-					}
-				case RE::FormType::Cell:
-					{
-						return currentCell == form;
-					}
-				default:
-					break;
-				}
-			}
-		} else {
-			const std::string editorID = std::get<std::string>(a_data);
-			if (currentCell && string::iequals(currentCell->GetFormEditorID(), editorID)) {
-				return true;
-			}
-			if (currentLocation && currentLocation->HasKeywordString(editorID)) {
-				return true;
-			}
-			if (const auto keywordForm = base->As<RE::BGSKeywordForm>()) {
-				return keywordForm->HasKeywordString(editorID);
-			}
-		}
-		return false;
-	}
-
 	SwapResult Manager::GetSwapConditionalBase(const RE::TESObjectREFR* a_ref, const RE::TESForm* a_base)
 	{
 		if (const auto it = swapFormsConditional.find(a_base->GetFormID()); it != swapFormsConditional.end()) {
-			auto cell = a_ref->GetParentCell();
-			if (!cell) {
-				cell = a_ref->GetSaveParentCell();
-			}
-
-			const ConditionalInput input{ a_ref, a_base, cell, a_ref->GetCurrentLocation() };
-
-			const auto result = std::ranges::find_if(it->second, [&](const auto& a_data) {
-				return get_conditional_result(a_data.first, input);
-			});
+			const ConditionalInput input(a_ref, a_base);
+			const auto             result = std::ranges::find_if(it->second, [&](const auto& a_data) {
+                return input.IsValid(a_data.first);
+            });
 
 			if (result != it->second.end()) {
 				for (auto& swapData : result->second | std::ranges::views::reverse) {
@@ -274,16 +266,10 @@ namespace FormSwap
 	TransformResult Manager::GetTransformConditional(const RE::TESObjectREFR* a_ref, const RE::TESForm* a_base)
 	{
 		if (const auto it = transformsConditional.find(a_base->GetFormID()); it != transformsConditional.end()) {
-			auto cell = a_ref->GetParentCell();
-			if (!cell) {
-				cell = a_ref->GetSaveParentCell();
-			}
-
-			const ConditionalInput input{ a_ref, a_base, cell, a_ref->GetCurrentLocation() };
-
-			const auto result = std::ranges::find_if(it->second, [&](const auto& a_data) {
-				return get_conditional_result(a_data.first, input);
-			});
+			const ConditionalInput input(a_ref, a_base);
+			const auto             result = std::ranges::find_if(it->second, [&](const auto& a_data) {
+                return input.IsValid(a_data.first);
+            });
 
 			if (result != it->second.end()) {
 				for (auto& transformData : result->second | std::ranges::views::reverse) {
@@ -295,6 +281,16 @@ namespace FormSwap
 		}
 
 		return std::nullopt;
+	}
+
+	void Manager::InsertLeveledItemRef(const RE::TESObjectREFR* a_refr)
+	{
+		swappedLeveledItemRefs.insert(a_refr->GetFormID());
+	}
+
+	bool Manager::IsLeveledItemRefSwapped(const RE::TESObjectREFR* a_refr) const
+	{
+		return swappedLeveledItemRefs.contains(a_refr->GetFormID());
 	}
 
 	SwapResult Manager::GetSwapData(const RE::TESObjectREFR* a_ref, const RE::TESForm* a_base)

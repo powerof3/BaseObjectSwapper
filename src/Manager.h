@@ -4,68 +4,57 @@
 
 namespace FormSwap
 {
-	template <class T>
-	using SwapMap = Map<RE::FormID, T>;
+	struct ConditionalInput
+	{
+		ConditionalInput(const RE::TESObjectREFR* a_ref, const RE::TESForm* a_form) :
+			ref(a_ref),
+			base(a_form),
+			currentCell(a_ref->GetSaveParentCell()),
+			currentLocation(a_ref->GetCurrentLocation())
+		{}
 
-	using SwapDataVec = std::vector<SwapData>;
-	using TransformDataVec = std::vector<TransformData>;
+		[[nodiscard]] bool IsValid(const FormIDStr& a_data) const;
 
-	using SwapDataConditional = Map<FormIDStr, SwapDataVec>;
-	using TransformDataConditional = Map<FormIDStr, TransformDataVec>;
+		// members
+		const RE::TESObjectREFR* ref;
+		const RE::TESForm*       base;
+		RE::TESObjectCELL*       currentCell;
+		RE::BGSLocation*         currentLocation;
+	};
 
-	using ConditionalInput = std::tuple<const RE::TESObjectREFR*, const RE::TESForm*, RE::TESObjectCELL*, RE::BGSLocation*>;
-
-	using TransformResult = std::optional<Transform>;
-    using SwapResult = std::pair<RE::TESBoundObject*, TransformResult>;
-
-	class Manager
+	class Manager : public ISingleton<Manager>
 	{
 	public:
-		[[nodiscard]] static Manager* GetSingleton()
-		{
-			static Manager singleton;
-			return std::addressof(singleton);
-		}
-
 		void LoadFormsOnce();
 
-		void PrintConflicts() const;
-
-		SwapResult GetSwapData(const RE::TESObjectREFR* a_ref, const RE::TESForm* a_base);
-
-		SwapResult GetSwapConditionalBase(const RE::TESObjectREFR* a_ref, const RE::TESForm* a_base);
+		void            PrintConflicts() const;
+		SwapResult      GetSwapData(const RE::TESObjectREFR* a_ref, const RE::TESForm* a_base);
+		SwapResult      GetSwapConditionalBase(const RE::TESObjectREFR* a_ref, const RE::TESForm* a_base);
 		TransformResult GetTransformConditional(const RE::TESObjectREFR* a_ref, const RE::TESForm* a_base);
 
-	protected:
-		Manager() = default;
-		Manager(const Manager&) = delete;
-		Manager(Manager&&) = delete;
-		~Manager() = default;
-
-		Manager& operator=(const Manager&) = delete;
-		Manager& operator=(Manager&&) = delete;
+		void InsertLeveledItemRef(const RE::TESObjectREFR* a_refr);
+		bool IsLeveledItemRefSwapped(const RE::TESObjectREFR* a_refr) const;
 
 	private:
 		void LoadForms();
 
-	    SwapMap<SwapDataVec>& get_form_map(const std::string& a_str);
+		SwapMap<SwapDataVec>& get_form_map(const std::string& a_str);
+		static void           get_forms(const std::string& a_path, const std::string& a_str, SwapMap<SwapDataVec>& a_map);
+		void                  get_forms(const std::string& a_path, const std::string& a_str, const std::vector<FormIDStr>& a_conditionalIDs);
+		void                  get_transforms(const std::string& a_path, const std::string& a_str);
+		void                  get_transforms(const std::string& a_path, const std::string& a_str, const std::vector<FormIDStr>& a_conditionalIDs);
 
-        void get_forms(const std::string& a_path, const std::string& a_str, SwapMap<SwapDataVec>& a_map);
-		void get_forms(const std::string& a_path, const std::string& a_str, const std::vector<FormIDStr>& a_conditionalIDs);
-
-		void get_transforms(const std::string& a_path, const std::string& a_str);
-		void get_transforms(const std::string& a_path, const std::string& a_str, const std::vector<FormIDStr>& a_conditionalIDs);
-
-        [[nodiscard]] bool get_conditional_result(const FormIDStr& a_data, const ConditionalInput& a_input) const;
-
-		SwapMap<SwapDataVec> swapForms{};
-		SwapMap<SwapDataVec> swapRefs{};
+		// members
+		SwapMap<SwapDataVec>         swapForms{};
+		SwapMap<SwapDataVec>         swapRefs{};
 		SwapMap<SwapDataConditional> swapFormsConditional{};
 
-		SwapMap<TransformDataVec> transforms{};
+		SwapMap<TransformDataVec>         transforms{};
 		SwapMap<TransformDataConditional> transformsConditional{};
 
-		bool hasConflicts{ false };
+		Set<RE::FormID> swappedLeveledItemRefs{};
+
+		bool           hasConflicts{ false };
 		std::once_flag init{};
 	};
 }
