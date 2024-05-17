@@ -67,7 +67,7 @@ namespace FormSwap
 								});
 							}
 						} else {
-							logger::info("\t\t\t{} object property overrides found", values.size());
+							logger::info("\t\t\t{} ref property overrides found", values.size());
 							for (const auto& key : values) {
 								ObjectData::GetProperties(path, key.pItem, [&](const RE::FormID a_baseID, const ObjectData& a_objectData) {
 									if (auto it = refPropertiesConditional.find(a_baseID); it != refPropertiesConditional.end()) {
@@ -89,7 +89,7 @@ namespace FormSwap
 
 					if (!values.empty()) {
 						if (section == "Transforms" || section == "Properties") {
-							logger::info("\t\t\t{} object property overrides found", values.size());
+							logger::info("\t\t\t{} ref property overrides found", values.size());
 							for (const auto& key : values) {
 								ObjectData::GetProperties(path, key.pItem, [&](RE::FormID a_baseID, const ObjectData& a_objectData) {
 									refProperties[a_baseID].push_back(a_objectData);
@@ -114,8 +114,8 @@ namespace FormSwap
 		logger::info("{} form-form swaps", swapForms.size());
 		logger::info("{} conditional form swaps", swapFormsConditional.size());
 		logger::info("{} ref-form swaps", swapRefs.size());
-		logger::info("{} object property overrides", refProperties.size());
-		logger::info("{} conditional object property overrides", refPropertiesConditional.size());
+		logger::info("{} ref property overrides", refProperties.size());
+		logger::info("{} conditional ref property overrides", refPropertiesConditional.size());
 
 		logger::info("{:*^30}", "CONFLICTS");
 
@@ -151,7 +151,7 @@ namespace FormSwap
 
 		log_conflicts("Forms"sv, swapForms);
 		log_conflicts("References"sv, swapRefs);
-		log_conflicts("ObjectProperties"sv, refProperties);
+		log_conflicts("Properties"sv, refProperties);
 
 		logger::info("{:*^30}", "END");
 	}
