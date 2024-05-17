@@ -4,7 +4,9 @@ namespace FormSwap
 {
 	ObjectData::ObjectData(const Input& a_input) :
 		properties(a_input.properties),
-		chance(a_input.chance)
+		chance(a_input.chance),
+		record(a_input.record),
+		path(a_input.path)
 	{
 		properties.SetChanceType(chance.chanceType);
 	}

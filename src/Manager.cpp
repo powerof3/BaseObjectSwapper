@@ -134,7 +134,7 @@ namespace FormSwap
 					conflicts = true;
 					auto winningForm = string::split(winningRecord.record, "|");
 					logger::warn("\t{}", winningForm[0]);
-					logger::warn("\t\twinning record : {} ({})", winningForm[1], swapDataVec.back().path);
+					logger::warn("\t\twinning swap {} ({})", winningForm[1], swapDataVec.back().path);
 					logger::warn("\t\t{} conflicts", swapDataVec.size() - 1);
 					for (auto it = swapDataVec.rbegin() + 1; it != swapDataVec.rend(); ++it) {
 						auto losingRecord = it->record.substr(it->record.find('|') + 1);
