@@ -30,7 +30,7 @@ void MessageHandler(SKSE::MessagingInterface::Message* a_message)
 #ifdef SKYRIM_AE
 extern "C" DLLEXPORT constinit auto SKSEPlugin_Version = []() {
 	SKSE::PluginVersionData v;
-	v.PluginVersion(Version::MAJOR);
+	v.PluginVersion({ Version::MAJOR, Version::MINOR, Version::PATCH });
 	v.PluginName("Base Object Swapper");
 	v.AuthorName("powerofthree");
 	v.UsesAddressLibrary();
@@ -90,11 +90,11 @@ void InitializeLog()
 
 extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_skse)
 {
+	SKSE::Init(a_skse);
+
 	InitializeLog();
 
 	logger::info("Game version : {}", a_skse->RuntimeVersion().string());
-
-	SKSE::Init(a_skse);
 
 	const auto messaging = SKSE::GetMessagingInterface();
 	messaging->RegisterListener(MessageHandler);

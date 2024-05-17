@@ -7,7 +7,7 @@ namespace BaseObjectSwapper
 		if (const auto base = a_ref->GetBaseObject()) {
 			FormSwap::Manager::GetSingleton()->LoadFormsOnce();
 
-			const auto& [swapBase, transformData] = FormSwap::Manager::GetSingleton()->GetSwapData(a_ref, base);
+			const auto& [swapBase, objectProperties] = FormSwap::Manager::GetSingleton()->GetSwapData(a_ref, base);
 
 			if (swapBase && swapBase != base) {
 				a_ref->SetObjectReference(swapBase);
@@ -17,8 +17,9 @@ namespace BaseObjectSwapper
 				}
 			}
 
-			if (transformData) {
-				transformData->SetTransform(a_ref);
+			if (objectProperties) {
+				objectProperties->SetTransform(a_ref);
+				objectProperties->SetRecordFlags(a_ref);
 			}
 		}
 	}

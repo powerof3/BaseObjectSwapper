@@ -14,15 +14,20 @@ jobs:
     if: github.repository_owner == 'powerof3'
     uses: adya/pack-skse-mod/.github/workflows/pack.yml@main
     with:
+      AE_353_BRANCH: master
+      AE_353_COMMON_LIB_BRANCH: dev-1.6.640
       CMAKE_VR_CONFIG_PRESET: ''
       CMAKE_VR_BUILD_PRESET: ''
       FOMOD_INCLUDE_PDB: true
       FOMOD_MOD_NAME: "Base Object Swapper"
       FOMOD_MOD_AUTHOR: "powerofthree"
       FOMOD_MOD_NEXUS_ID: "60805"
-      FOMOD_SE_MIN_GAME_VERSION: '1.5'
-      FOMOD_AE_NAME: 'SSE v1.6.629+ ("Anniversary Edition")'
-      FOMOD_AE_DESCR: 'Select this if you are using Skyrim Anniversary Edition v1.6.629+ or higher.'
-      FOMOD_AE_MIN_GAME_VERSION: '1.6'
+      FOMOD_AE353_PATH: 'AE640/SKSE/Plugins'
+      FOMOD_AE353_NAME: 'SSE v1.6.640 ("Anniversary Edition")'
+      FOMOD_AE353_DESCR: 'Select this if you are using Skyrim Anniversary Edition v1.6.640'
+      FOMOD_AE353_MIN_GAME_VERSION: '1.6.629.0'
+      FOMOD_AE_NAME: 'SSE v1.6.1130+ ("Anniversary Edition")'
+      FOMOD_AE_DESCR: 'Select this if you are using Skyrim Anniversary Edition v1.6.1130 or higher (latest update).'
+      FOMOD_AE_MIN_GAME_VERSION: '1.6.1130.0'
       PUBLISH_ARCHIVE_TYPE: '7z'
-      VCPKG_COMMIT_ID: '78b61582c9e093fda56a01ebb654be15a0033897'
+      VCPKG_COMMIT_ID: '06475a351672e6fad52e707b33e30eaf2811d341'
