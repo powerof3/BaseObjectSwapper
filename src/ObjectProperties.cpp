@@ -56,7 +56,7 @@ void ScaleRange::SetScale(RE::TESObjectREFR* a_ref, const RandValueParams& a_par
 	if (absolute) {
 		a_ref->refScale = static_cast<std::uint16_t>(value.GetRandomValue(a_params));
 	} else {
-		a_ref->refScale *= static_cast<std::uint16_t>(value.GetRandomValue(a_params));
+		a_ref->refScale = static_cast<std::uint16_t>(a_ref->refScale * value.GetRandomValue(a_params));
 	}
 }
 
