@@ -22,12 +22,12 @@ namespace FormSwap
 		void LoadForms();
 
 		// members
-		FormIDMap<SwapFormDataVec>         swapRefs{};
-		FormIDMap<SwapFormDataConditional> swapFormsConditional{};
-		FormIDMap<SwapFormDataVec>         swapForms{};
+		FormIDMap<SwapFormDataVec>                      swapRefs{};
+		FormIDMap<std::vector<SwapFormDataConditional>> swapFormsConditional{};
+		FormIDMap<SwapFormDataVec>                      swapForms{};
 
-		FormIDMap<ObjectDataVec>         refProperties{};
-		FormIDMap<ObjectDataConditional> refPropertiesConditional{};
+		FormIDMap<ObjectDataVec>                      refProperties{};
+		FormIDMap<std::vector<ObjectDataConditional>> refPropertiesConditional{};
 
 		Set<RE::FormID> swappedLeveledItemRefs{};
 

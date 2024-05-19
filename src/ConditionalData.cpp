@@ -20,12 +20,6 @@ ConditionFilters::ConditionFilters(std::vector<std::string>& a_conditions)
 	}
 }
 
-void ConditionFilters::append_range(const ConditionFilters& a_rhs)
-{
-	NOT.append_range(a_rhs.NOT);
-	MATCH.append_range(a_rhs.MATCH);
-}
-
 bool ConditionalInput::IsValid(RE::FormID a_formID) const
 {
 	if (const auto form = RE::TESForm::LookupByID(a_formID)) {

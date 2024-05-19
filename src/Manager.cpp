@@ -58,24 +58,14 @@ namespace FormSwap
 							logger::info("\t\t\t{} form swaps found", values.size());
 							for (const auto& key : values) {
 								SwapFormData::GetForms(path, key.pItem, [&](const RE::FormID a_baseID, const SwapFormData& a_swapData) {
-									if (auto it = swapFormsConditional.find(a_baseID); it != swapFormsConditional.end()) {
-										it->second.filters.append_range(processedConditions);
-										it->second.data.push_back(a_swapData);
-									} else {
-										swapFormsConditional.emplace(a_baseID, SwapFormDataConditional(processedConditions, a_swapData));
-									}
+									swapFormsConditional[a_baseID].emplace_back(processedConditions, a_swapData);
 								});
 							}
 						} else {
 							logger::info("\t\t\t{} ref property overrides found", values.size());
 							for (const auto& key : values) {
 								ObjectData::GetProperties(path, key.pItem, [&](const RE::FormID a_baseID, const ObjectData& a_objectData) {
-									if (auto it = refPropertiesConditional.find(a_baseID); it != refPropertiesConditional.end()) {
-										it->second.filters.append_range(processedConditions);
-										it->second.data.push_back(a_objectData);
-									} else {
-										refPropertiesConditional.emplace(a_baseID, ObjectDataConditional(processedConditions, a_objectData));
-									}
+									refPropertiesConditional[a_baseID].emplace_back(processedConditions, a_objectData);
 								});
 							}
 						}
@@ -166,8 +156,12 @@ namespace FormSwap
 	SwapFormResult Manager::GetSwapFormConditional(const RE::TESObjectREFR* a_ref, const RE::TESForm* a_base)
 	{
 		if (const auto it = swapFormsConditional.find(a_base->GetFormID()); it != swapFormsConditional.end()) {
-			if (const ConditionalInput input(a_ref, a_base); input.IsValid(it->second.filters)) {
-				for (auto& swapData : it->second.data | std::ranges::views::reverse) {
+			const ConditionalInput input(a_ref, a_base);
+
+			auto result = std::ranges::find_if(it->second | std::views::reverse, [&](auto& conditionalData) { return input.IsValid(conditionalData.filters); });
+
+			if (result != it->second.rend()) {
+				for (auto& swapData : result->data | std::ranges::views::reverse) {
 					if (auto swapObject = swapData.GetSwapBase(a_ref)) {
 						return { swapObject, swapData.properties };
 					}
@@ -181,8 +175,12 @@ namespace FormSwap
 	std::optional<ObjectProperties> Manager::GetObjectPropertiesConditional(const RE::TESObjectREFR* a_ref, const RE::TESForm* a_base)
 	{
 		if (const auto it = refPropertiesConditional.find(a_base->GetFormID()); it != refPropertiesConditional.end()) {
-			if (const ConditionalInput input(a_ref, a_base); input.IsValid(it->second.filters)) {
-				for (auto& objectData : it->second.data | std::ranges::views::reverse) {
+			const ConditionalInput input(a_ref, a_base);
+
+			auto result = std::ranges::find_if(it->second | std::views::reverse, [&](auto& conditionalData) { return input.IsValid(conditionalData.filters); });
+
+			if (result != it->second.rend()) {
+				for (auto& objectData : result->data | std::ranges::views::reverse) {
 					if (objectData.HasValidProperties(a_ref)) {
 						return objectData.properties;
 					}

@@ -6,8 +6,6 @@ public:
 	ConditionFilters() = default;
 	ConditionFilters(std::vector<std::string>& a_conditions);
 
-	void append_range(const ConditionFilters& a_rhs);
-
 	// members
 	std::vector<FormIDStr> NOT{};
 	std::vector<FormIDStr> MATCH{};
