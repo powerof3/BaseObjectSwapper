@@ -16,6 +16,9 @@ public:
 	template <class T>
 	T generate(T a_min, T a_max) const
 	{
+		if (type == CHANCE_TYPE::kRandom) {
+			return SeedRNG().generate<T>(a_min, a_max);
+		}
 		return SeedRNG(seed).generate<T>(a_min, a_max);
 	}
 
@@ -36,5 +39,5 @@ public:
 
 	// members
 	CHANCE_TYPE   chanceType{ CHANCE_TYPE::kRefHash };
-	std::uint32_t chanceValue{ 100 };
+	float chanceValue{ 100.0f };
 };
