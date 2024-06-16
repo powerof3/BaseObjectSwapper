@@ -230,10 +230,12 @@ namespace FormSwap
 		}
 
 		if (const auto swapLvlBase = swapData.first ? swapData.first->As<RE::TESLevItem>() : nullptr) {
-			RE::BSScrapArray<RE::CALCED_OBJECT> calcedObjects{};
-			swapLvlBase->CalculateCurrentFormList(a_ref->GetCalcLevel(false), 1, calcedObjects, 0, true);
-			if (!calcedObjects.empty()) {
-				swapData.first = static_cast<RE::TESBoundObject*>(calcedObjects.front().form);
+			if (a_ref->GetEncounterZone() == nullptr) {
+				RE::BSScrapArray<RE::CALCED_OBJECT> calcedObjects{};
+				swapLvlBase->CalculateCurrentFormList(a_ref->GetCalcLevel(false), 1, calcedObjects, 0, true);
+				if (!calcedObjects.empty()) {
+					swapData.first = static_cast<RE::TESBoundObject*>(calcedObjects.front().form);
+				}
 			}
 		}
 
