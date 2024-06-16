@@ -1,7 +1,7 @@
 #include "RNG.h"
 
-BOS_RNG::BOS_RNG(CHANCE_TYPE a_type, const RE::TESObjectREFR* a_ref) :
-	type(a_type)
+BOS_RNG::BOS_RNG(Chance a_chance, const RE::TESObjectREFR* a_ref) :
+	type(a_chance.chanceType)
 {
 	switch (type) {
 	case CHANCE_TYPE::kRefHash:
@@ -27,10 +27,18 @@ BOS_RNG::BOS_RNG(CHANCE_TYPE a_type, const RE::TESObjectREFR* a_ref) :
 			}
 		}
 		break;
+	case CHANCE_TYPE::kRandom:
+		seed = a_chance.seed;
+		break;
 	default:
 		break;
 	}
 }
+
+BOS_RNG::BOS_RNG(Chance a_chance) :
+	type(a_chance.chanceType),
+	seed(a_chance.seed) 
+	{}
 
 Chance::Chance(const std::string& a_str)
 {
@@ -43,8 +51,11 @@ Chance::Chance(const std::string& a_str)
 			} else {
 				chanceType = CHANCE_TYPE::kRefHash;
 			}
+
 			if (srell::cmatch match; srell::regex_search(a_str.c_str(), match, regex::generic)) {
-				chanceValue = string::to_num<float>(match[1].str());
+				const auto chanceOptions = string::split(match[1].str(), ",");
+				chanceValue = string::to_num<float>(chanceOptions[0]);
+				seed = chanceOptions.size() > 1 ? string::to_num<std::uint64_t>(chanceOptions[1]) : 0;
 			}
 		}
 	}
@@ -53,7 +64,7 @@ Chance::Chance(const std::string& a_str)
 bool Chance::PassedChance(const RE::TESObjectREFR* a_ref) const
 {
 	if (chanceValue < 100.0f) {
-		BOS_RNG rng(chanceType, a_ref);
+		BOS_RNG rng(*this, a_ref);
 		if (const auto rngValue = rng.generate<float>(0.0f, 100.0f); rngValue > chanceValue) {
 			return false;
 		}

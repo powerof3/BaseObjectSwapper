@@ -1,33 +1,11 @@
 #pragma once
 
-struct BOS_RNG
+enum class CHANCE_TYPE
 {
-public:
-	enum class CHANCE_TYPE
-	{
-		kRandom,
-		kRefHash,
-		kLocationHash
-	};
-
-	BOS_RNG() = default;
-	BOS_RNG(CHANCE_TYPE a_type, const RE::TESObjectREFR* a_ref);
-
-	template <class T>
-	T generate(T a_min, T a_max) const
-	{
-		if (type == CHANCE_TYPE::kRandom) {
-			return SeedRNG().generate<T>(a_min, a_max);
-		}
-		return SeedRNG(seed).generate<T>(a_min, a_max);
-	}
-
-	// members
-	CHANCE_TYPE   type;
-	std::uint64_t seed;
+	kRandom,
+	kRefHash,
+	kLocationHash
 };
-
-using CHANCE_TYPE = BOS_RNG::CHANCE_TYPE;
 
 struct Chance
 {
@@ -40,4 +18,27 @@ public:
 	// members
 	CHANCE_TYPE   chanceType{ CHANCE_TYPE::kRefHash };
 	float chanceValue{ 100.0f };
+	std::uint64_t seed{ 0 };
+
+};
+
+struct BOS_RNG
+{
+public:
+	BOS_RNG() = default;
+	BOS_RNG(Chance a_chance, const RE::TESObjectREFR* a_ref);
+	BOS_RNG(Chance a_chance);
+
+	template <class T>
+	T generate(T a_min, T a_max) const
+	{
+		if (type == CHANCE_TYPE::kRandom && seed == 0) {
+			return SeedRNG().generate<T>(a_min, a_max);
+		}
+		return SeedRNG(seed).generate<T>(a_min, a_max);
+	}
+
+	// members
+	CHANCE_TYPE   type;
+	std::uint64_t seed { 0 };
 };
