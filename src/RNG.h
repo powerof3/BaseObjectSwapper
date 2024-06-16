@@ -16,17 +16,12 @@ public:
 	template <class T>
 	T generate(T a_min, T a_max) const
 	{
-		if (type == CHANCE_TYPE::kRandom) {
-			return staticRNG.generate<T>(a_min, a_max);
-		}
 		return SeedRNG(seed).generate<T>(a_min, a_max);
 	}
 
 	// members
 	CHANCE_TYPE   type;
 	std::uint64_t seed;
-
-	static inline SeedRNG staticRNG{};
 };
 
 using CHANCE_TYPE = BOS_RNG::CHANCE_TYPE;
@@ -40,6 +35,6 @@ public:
 	bool PassedChance(const RE::TESObjectREFR* a_ref) const;
 
 	// members
-	CHANCE_TYPE   chanceType;
+	CHANCE_TYPE   chanceType{ CHANCE_TYPE::kRefHash };
 	std::uint32_t chanceValue{ 100 };
 };

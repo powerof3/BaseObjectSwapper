@@ -4,6 +4,9 @@ BOS_RNG::BOS_RNG(CHANCE_TYPE a_type, const RE::TESObjectREFR* a_ref) :
 	type(a_type)
 {
 	switch (type) {
+	case CHANCE_TYPE::kRandom:
+		seed = std::chrono::steady_clock::now().time_since_epoch().count();
+		break;
 	case CHANCE_TYPE::kRefHash:
 		seed = a_ref->GetFormID();
 		break;
@@ -37,7 +40,7 @@ Chance::Chance(const std::string& a_str)
 	if (distribution::is_valid_entry(a_str)) {
 		if (a_str.contains("chance")) {
 			if (a_str.contains("R")) {
-				chanceType = BOS_RNG::CHANCE_TYPE::kRandom;
+				chanceType = CHANCE_TYPE::kRandom;
 			} else if (a_str.contains("L")) {
 				chanceType = CHANCE_TYPE::kLocationHash;
 			} else {
