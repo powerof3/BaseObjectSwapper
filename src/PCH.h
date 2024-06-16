@@ -45,9 +45,12 @@ template <class K, class D>
 using Map = ankerl::unordered_dense::map<K, D>;
 template <class T>
 using Set = ankerl::unordered_dense::set<T>;
+template <class T>
+using OrderedSet = std::set<T>;
 
 using FormIDSet = Set<RE::FormID>;
 using FormIDOrSet = std::variant<RE::FormID, FormIDSet>;
+using FormIDOrderedSet = OrderedSet<RE::FormID>;
 
 template <class T>
 using FormIDMap = Map<RE::FormID, T>;
