@@ -1,6 +1,7 @@
 #include "ConditionalData.h"
 
-ConditionFilters::ConditionFilters(std::vector<std::string>& a_conditions)
+ConditionFilters::ConditionFilters(std::string a_conditionID, std::vector<std::string>& a_conditions) :
+	conditionID(std::move(a_conditionID))
 {
 	NOT.reserve(a_conditions.size());
 	MATCH.reserve(a_conditions.size());
