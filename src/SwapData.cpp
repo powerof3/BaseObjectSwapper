@@ -92,6 +92,36 @@ namespace FormSwap
 			} else {
 				logger::error("\t\t\t\tfail : [{}] (SWAP formID not found)", a_str);
 			}
+		} else if (const auto baseFormIDs = util::GetFormIDOrderedSet(formPair[0]); !baseFormIDs.empty()) {
+			if (auto swapFormIDs = util::GetFormIDOrderedSet(formPair[1]); !swapFormIDs.empty()) {
+				if (baseFormIDs.size() > swapFormIDs.size()) {
+					logger::error("\t\t\t\tfail : [{}] (SWAP formID set must be equal or larger than BASE formID set)", a_str);
+					return;
+				}
+				auto properties = formPair.size() > 2 ? formPair[2] : std::string{};
+				auto chance = formPair.size() > 3 ? formPair[3] : std::string{};
+				auto seed_str = formPair.size() > 4 ? formPair[4] : std::string{};
+
+				// user provided seed allows the user to determine when they want new swaps
+				// e.g. they can change the SWAP file for each of their characters
+				const auto seed = string::const_hash(seed_str);
+				auto seededRNG = SeedRNG(seed);
+
+				// randomly assign each baseFormID to a unique swapFormID
+				for (auto itBaseFormID : baseFormIDs) {
+					const auto setEnd = std::distance(swapFormIDs.begin(), swapFormIDs.end()) - 1;
+					const auto randIt = seededRNG.generate<std::int64_t>(0, setEnd);
+					auto swapFormID = swapFormIDs.extract(*std::next(swapFormIDs.begin(), randIt));
+					if (swapFormID) {
+						const Input  input(properties, chance, a_str, a_path);
+						SwapFormData swapFormData(swapFormID.value(), input);
+
+						a_func(itBaseFormID, swapFormData);
+					}
+				}
+			} else {
+				logger::error("\t\t\t\tfail : [{}] (SWAP formID set not found)", a_str);
+			}
 		} else {
 			logger::error("\t\t\t\tfail : [{}] (BASE formID not found)", a_str);
 		}
