@@ -4,28 +4,26 @@ struct ConditionFilters
 {
 public:
 	ConditionFilters() = default;
-	ConditionFilters(std::vector<std::string>& a_conditions);
+	ConditionFilters(std::string a_conditionID, std::vector<std::string>& a_conditions);
+
+	bool operator==(const ConditionFilters& a_rhs) const
+	{
+		return conditionID == a_rhs.conditionID;
+	}
+
+	bool operator<(const ConditionFilters& a_rhs) const
+	{
+		return conditionID < a_rhs.conditionID;
+	}
 
 	// members
+	std::string            conditionID{}; // path|condition1,condition2
 	std::vector<FormIDStr> NOT{};
 	std::vector<FormIDStr> MATCH{};
 };
 
 template <class T>
-struct ConditionalData
-{
-public:
-	ConditionalData() = default;
-	ConditionalData(const ConditionFilters& a_filters, const T& a_data) :
-		filters(a_filters)
-	{
-		data.push_back(a_data);
-	}
-
-	// members
-	ConditionFilters filters;
-	std::vector<T>   data;
-};
+using ConditionalData = std::map<ConditionFilters, std::vector<T>>;
 
 struct ConditionalInput
 {
@@ -34,7 +32,7 @@ struct ConditionalInput
 		base(a_form),
 		currentCell(a_ref->GetSaveParentCell()),
 		currentLocation(a_ref->GetCurrentLocation()),
-		currentRegionList(currentCell ? currentCell->GetRegionList(false): nullptr)
+		currentRegionList(currentCell ? currentCell->GetRegionList(false) : nullptr)
 	{}
 
 	[[nodiscard]] bool IsValid(RE::FormID a_formID) const;

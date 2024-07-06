@@ -17,7 +17,7 @@ public:
 	T generate(T a_min, T a_max) const
 	{
 		if (type == CHANCE_TYPE::kRandom) {
-			return staticRNG.generate<T>(a_min, a_max);
+			return SeedRNG().generate<T>(a_min, a_max);
 		}
 		return SeedRNG(seed).generate<T>(a_min, a_max);
 	}
@@ -25,8 +25,6 @@ public:
 	// members
 	CHANCE_TYPE   type;
 	std::uint64_t seed;
-
-	static inline SeedRNG staticRNG{};
 };
 
 using CHANCE_TYPE = BOS_RNG::CHANCE_TYPE;
@@ -40,6 +38,6 @@ public:
 	bool PassedChance(const RE::TESObjectREFR* a_ref) const;
 
 	// members
-	CHANCE_TYPE   chanceType;
-	std::uint32_t chanceValue{ 100 };
+	CHANCE_TYPE   chanceType{ CHANCE_TYPE::kRefHash };
+	float chanceValue{ 100.0f };
 };

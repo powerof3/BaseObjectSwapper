@@ -37,14 +37,14 @@ Chance::Chance(const std::string& a_str)
 	if (distribution::is_valid_entry(a_str)) {
 		if (a_str.contains("chance")) {
 			if (a_str.contains("R")) {
-				chanceType = BOS_RNG::CHANCE_TYPE::kRandom;
+				chanceType = CHANCE_TYPE::kRandom;
 			} else if (a_str.contains("L")) {
 				chanceType = CHANCE_TYPE::kLocationHash;
 			} else {
 				chanceType = CHANCE_TYPE::kRefHash;
 			}
 			if (srell::cmatch match; srell::regex_search(a_str.c_str(), match, regex::generic)) {
-				chanceValue = string::to_num<std::uint32_t>(match[1].str());
+				chanceValue = string::to_num<float>(match[1].str());
 			}
 		}
 	}
@@ -52,9 +52,9 @@ Chance::Chance(const std::string& a_str)
 
 bool Chance::PassedChance(const RE::TESObjectREFR* a_ref) const
 {
-	if (chanceValue != 100) {
+	if (chanceValue < 100.0f) {
 		BOS_RNG rng(chanceType, a_ref);
-		if (const auto rngValue = rng.generate<std::uint32_t>(0, 100); rngValue > chanceValue) {
+		if (const auto rngValue = rng.generate<float>(0.0f, 100.0f); rngValue > chanceValue) {
 			return false;
 		}
 	}

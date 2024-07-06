@@ -24,10 +24,12 @@ namespace util
 				return RE::TESDataHandler::GetSingleton()->LookupFormID(formID, modName);
 			}
 		}
-		if (string::is_only_hex(a_str)) {
-			if (const auto form = RE::TESForm::LookupByID(string::to_num<RE::FormID>(a_str, true))) {
-				return form->GetFormID();
+		if (string::is_only_hex(a_str, true)) {
+			const auto formID = string::to_num<RE::FormID>(a_str, true);
+			if (const auto form = RE::TESForm::LookupByID(formID); !form) {
+				logger::error("\t\tFilter [{}] INFO - unable to find form, treating filter as cell formID", a_str);
 			}
+			return formID;
 		}
 		if (const auto form = RE::TESForm::LookupByEditorID(a_str)) {
 			return form->GetFormID();
