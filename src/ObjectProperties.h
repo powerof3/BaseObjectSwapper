@@ -4,7 +4,7 @@
 
 struct RandValueParams
 {
-	RandValueParams(CHANCE_TYPE a_type, const RE::TESObjectREFR* a_ref);
+	RandValueParams(Chance a_chance, const RE::TESObjectREFR* a_ref);
 
 	BOS_RNG rng{};
 	bool    clamp{ false };
@@ -72,7 +72,7 @@ public:
 
 	bool IsValid() const;
 
-	void SetChanceType(CHANCE_TYPE a_type);
+	void SetChance(Chance a_chance);
 	void SetTransform(RE::TESObjectREFR* a_refr) const;
 	void SetRecordFlags(RE::TESObjectREFR* a_refr) const;
 
@@ -80,7 +80,7 @@ private:
 	void assign_record_flags(const std::string& a_str, bool a_unsetFlag);
 
 	// members
-	CHANCE_TYPE chanceType{ CHANCE_TYPE::kRefHash };
+	Chance chance{};
 
 	std::optional<Point3Range> location{ std::nullopt };
 	std::optional<Point3Range> rotation{ std::nullopt };

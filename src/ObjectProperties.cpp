@@ -1,7 +1,7 @@
 #include "ObjectProperties.h"
 
-RandValueParams::RandValueParams(CHANCE_TYPE a_type, const RE::TESObjectREFR* a_ref) :
-	rng(a_type, a_ref)
+RandValueParams::RandValueParams(Chance a_chance, const RE::TESObjectREFR* a_ref) :
+	rng(a_chance, a_ref)
 {}
 
 FloatRange::FloatRange(const std::string& a_str)
@@ -139,15 +139,15 @@ bool ObjectProperties::IsValid() const
 	return location || rotation || refScale || recordFlagsSet != 0 || recordFlagsUnset != 0;
 }
 
-void ObjectProperties::SetChanceType(CHANCE_TYPE a_type)
+void ObjectProperties::SetChance(Chance a_chance)
 {
-	chanceType = a_type;
+	chance = a_chance;
 }
 
 void ObjectProperties::SetTransform(RE::TESObjectREFR* a_refr) const
 {
 	if (location || rotation || refScale) {
-		RandValueParams params(chanceType, a_refr);
+		RandValueParams params(chance, a_refr);
 		if (location) {
 			location->SetTransform(a_refr->data.location, params);
 		}
