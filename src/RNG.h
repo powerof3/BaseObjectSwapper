@@ -26,8 +26,8 @@ struct BOS_RNG
 {
 public:
 	BOS_RNG() = default;
-	BOS_RNG(Chance a_chance, const RE::TESObjectREFR* a_ref);
-	BOS_RNG(Chance a_chance);
+	BOS_RNG(const Chance& a_chance, const RE::TESObjectREFR* a_ref);
+	BOS_RNG(const Chance& a_chance);
 
 	template <class T>
 	T generate(T a_min, T a_max) const

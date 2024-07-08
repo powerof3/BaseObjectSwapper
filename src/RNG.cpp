@@ -1,6 +1,6 @@
 #include "RNG.h"
 
-BOS_RNG::BOS_RNG(Chance a_chance, const RE::TESObjectREFR* a_ref) :
+BOS_RNG::BOS_RNG(const Chance& a_chance, const RE::TESObjectREFR* a_ref) :
 	type(a_chance.chanceType)
 {
 	switch (type) {
@@ -35,10 +35,10 @@ BOS_RNG::BOS_RNG(Chance a_chance, const RE::TESObjectREFR* a_ref) :
 	}
 }
 
-BOS_RNG::BOS_RNG(Chance a_chance) :
+BOS_RNG::BOS_RNG(const Chance& a_chance) :
 	type(a_chance.chanceType),
-	seed(a_chance.seed) 
-	{}
+	seed(a_chance.seed)
+{}
 
 Chance::Chance(const std::string& a_str)
 {
