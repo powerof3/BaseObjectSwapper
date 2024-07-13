@@ -69,6 +69,8 @@ namespace util
 				}
 			}
 			return set;
+		} else if (auto formID = GetFormID(a_str); formID != 0) {
+			set.emplace(formID);
 		}
 		return set;
 	}
