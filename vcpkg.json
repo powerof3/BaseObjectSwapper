@@ -1,6 +1,6 @@
 {
   "name": "base-object-swapper",
-  "version-string": "3.2.0",
+  "version-string": "3.3.0",
   "description": "Base Object Swapper",
   "homepage": "",
   "license": "MIT",
@@ -12,5 +12,6 @@
     "spdlog",
     "unordered-dense",
     "xbyak"
-  ]
+  ],
+  "builtin-baseline": "b8ac6696e3af59f4f0666ab81a48ae589cde00a8"
 }
