@@ -31,6 +31,7 @@ struct ConditionalInput
 		ref(a_ref),
 		base(a_form),
 		currentCell(a_ref->GetSaveParentCell()),
+		currentWorldspace(a_ref->GetWorldspace()),
 		currentLocation(a_ref->GetCurrentLocation()),
 		currentRegionList(currentCell ? currentCell->GetRegionList(false) : nullptr)
 	{}
@@ -45,6 +46,7 @@ struct ConditionalInput
 	const RE::TESObjectREFR* ref;
 	const RE::TESForm*       base;
 	RE::TESObjectCELL*       currentCell;
+	RE::TESWorldSpace*       currentWorldspace;
 	RE::BGSLocation*         currentLocation;
 	RE::TESRegionList*       currentRegionList;
 };
