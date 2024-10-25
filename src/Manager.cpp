@@ -217,18 +217,18 @@ namespace FormSwap
 			return { nullptr, std::nullopt };
 		};
 
+		// references -> conditional forms -> forms
 		if (!a_ref->IsDynamicForm()) {
 			swapData = get_swap_base(a_ref, swapRefs);
 		}
-
 		if (!swapData.first) {
 			swapData = GetSwapFormConditional(a_ref, a_base);
 		}
-
 		if (!swapData.first) {
 			swapData = get_swap_base(a_base, swapForms);
 		}
 
+		// process leveled swaps. do not swap if leveled item has encounter zone
 		if (const auto swapLvlBase = swapData.first ? swapData.first->As<RE::TESLevItem>() : nullptr) {
 			if (a_ref->GetEncounterZone() == nullptr) {
 				RE::BSScrapArray<RE::CALCED_OBJECT> calcedObjects{};
@@ -236,6 +236,8 @@ namespace FormSwap
 				if (!calcedObjects.empty()) {
 					swapData.first = static_cast<RE::TESBoundObject*>(calcedObjects.front().form);
 				}
+			} else {
+				swapData.first = nullptr;
 			}
 		}
 
@@ -255,14 +257,13 @@ namespace FormSwap
 			return a_result && a_result->IsValid();
 		};
 
+		// references -> conditional forms -> forms
 		if (!has_properties(swapData.second) && !a_ref->IsDynamicForm()) {
 			swapData.second = get_properties(a_ref);
 		}
-
 		if (!has_properties(swapData.second)) {
 			swapData.second = GetObjectPropertiesConditional(a_ref, a_base);
 		}
-
 		if (!has_properties(swapData.second)) {
 			swapData.second = get_properties(a_base);
 		}

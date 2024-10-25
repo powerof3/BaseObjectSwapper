@@ -30,4 +30,4 @@ jobs:
       FOMOD_AE_DESCR: 'Select this if you are using Skyrim Anniversary Edition v1.6.1130 or higher (latest update).'
       FOMOD_AE_MIN_GAME_VERSION: '1.6.1130.0'
       PUBLISH_ARCHIVE_TYPE: '7z'
-      VCPKG_COMMIT_ID: 'b8ac6696e3af59f4f0666ab81a48ae589cde00a8'
+      VCPKG_COMMIT_ID: '41626fd77bf42f29e8f7e43dc1f2f05780588cde'
