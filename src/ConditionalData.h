@@ -17,7 +17,7 @@ public:
 	}
 
 	// members
-	std::string            conditionID{}; // path|condition1,condition2
+	std::string            conditionID{};  // path|condition1,condition2
 	std::vector<FormIDStr> NOT{};
 	std::vector<FormIDStr> MATCH{};
 };

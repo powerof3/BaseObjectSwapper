@@ -17,9 +17,8 @@ public:
 
 	// members
 	CHANCE_TYPE   chanceType{ CHANCE_TYPE::kRefHash };
-	float chanceValue{ 100.0f };
+	float         chanceValue{ 100.0f };
 	std::uint64_t seed{ 0 };
-
 };
 
 struct BOS_RNG
@@ -40,5 +39,5 @@ public:
 
 	// members
 	CHANCE_TYPE   type;
-	std::uint64_t seed { 0 };
+	std::uint64_t seed{ 0 };
 };

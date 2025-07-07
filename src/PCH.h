@@ -6,6 +6,7 @@
 #include <ranges>
 
 #include "RE/Skyrim.h"
+#include "REX/REX/Singleton.h"
 #include "SKSE/SKSE.h"
 
 #include <MergeMapperPluginAPI.h>
@@ -20,7 +21,7 @@
 #include <CLibUtil/rng.hpp>
 #include <CLibUtil/string.hpp>
 #include <ClibUtil/simpleINI.hpp>
-#include <ClibUtil/singleton.hpp>
+
 #include <ClibUtil/editorID.hpp>
 
 #define DLLEXPORT __declspec(dllexport)
@@ -29,7 +30,6 @@ namespace logger = SKSE::log;
 using namespace std::literals;
 
 using namespace clib_util;
-using namespace clib_util::singleton;
 using SeedRNG = clib_util::RNG;
 
 // for visting variants
