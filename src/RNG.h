@@ -40,4 +40,7 @@ public:
 	// members
 	CHANCE_TYPE   type;
 	std::uint64_t seed{ 0 };
+
+private:
+	std::uint64_t get_form_seed(const RE::TESForm* a_form);
 };

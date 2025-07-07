@@ -1,29 +1,44 @@
 #include "RNG.h"
 
+std::uint64_t BOS_RNG::get_form_seed(const RE::TESForm* a_form)
+{
+	if (a_form->IsDynamicForm()) {
+		return a_form->GetFormID();
+	}
+	
+	std::uint64_t result = 0;
+	boost::hash_combine(result, a_form->GetLocalFormID());
+	boost::hash_combine(result, a_form->GetFile(0)->GetFilename());
+	return result;
+}
+
 BOS_RNG::BOS_RNG(const Chance& a_chance, const RE::TESObjectREFR* a_ref) :
 	type(a_chance.chanceType)
 {
 	switch (type) {
 	case CHANCE_TYPE::kRefHash:
-		seed = a_ref->GetFormID();
+		seed = get_form_seed(a_ref);
 		break;
 	case CHANCE_TYPE::kLocationHash:
 		{
-			auto baseID = a_ref->GetBaseObject()->GetFormID();
-			auto location = a_ref->GetCurrentLocation();
+			auto base = a_ref->GetBaseObject();
+			auto location = a_ref->GetEditorLocation();
 			auto cell = a_ref->GetSaveParentCell();
 
 			if (!location && !cell) {
-				seed = a_ref->GetFormID();
+				seed = get_form_seed(a_ref);
 			} else {
-				RE::FormID locID = 0;
+				RE::TESForm* cellOrLoc = nullptr;
 				if (location) {
-					locID = location->GetFormID();
+					cellOrLoc = location;
 				} else if (cell) {
-					locID = cell->GetFormID();
+					cellOrLoc = cell;
 				}
 				// generate hash based on location + baseID
-				seed = hash::szudzik_pair(locID, baseID);
+				std::uint64_t result = 0;
+				boost::hash_combine(result, get_form_seed(cellOrLoc));
+				boost::hash_combine(result, get_form_seed(base));
+				seed = result;
 			}
 		}
 		break;

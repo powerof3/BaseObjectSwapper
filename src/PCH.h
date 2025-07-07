@@ -14,6 +14,7 @@
 #include <ankerl/unordered_dense.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <srell.hpp>
+#include <boost/container_hash/hash.hpp>
 
 #include <CLibUtil/distribution.hpp>
 #include <CLibUtil/hash.hpp>
