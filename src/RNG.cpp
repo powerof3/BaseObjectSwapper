@@ -5,10 +5,16 @@ std::uint64_t BOS_RNG::get_form_seed(const RE::TESForm* a_form)
 	if (a_form->IsDynamicForm()) {
 		return a_form->GetFormID();
 	}
-	
+
 	std::uint64_t result = 0;
 	boost::hash_combine(result, a_form->GetLocalFormID());
-	boost::hash_combine(result, a_form->GetFile(0)->GetFilename());
+
+	auto fileName = a_form->GetFile(0)->GetFilename();
+	if (a_form->AsReference() && (a_form->GetFormID() & 0xFF000000) == 0) {
+		fileName = "Skyrim.esm"sv;
+	}
+	boost::hash_combine(result, fileName);
+
 	return result;
 }
 
