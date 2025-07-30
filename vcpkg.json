@@ -1,10 +1,11 @@
 {
   "name": "base-object-swapper",
-  "version-string": "3.1.1",
+  "version-string": "3.4.1",
   "description": "Base Object Swapper",
   "homepage": "",
   "license": "MIT",
   "dependencies": [
+    "boost-container-hash",
     "clib-util",
     "mergemapper",
     "rsm-binary-io",
@@ -12,5 +13,6 @@
     "spdlog",
     "unordered-dense",
     "xbyak"
-  ]
+  ],
+  "builtin-baseline": "53b9816594558d0b78529ecce2bf4a97d0a0729e"
 }

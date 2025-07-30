@@ -48,6 +48,11 @@ bool ConditionalInput::IsValid(RE::FormID a_formID) const
 			}
 		case RE::FormType::Cell:
 			return currentCell == form;
+		case RE::FormType::WorldSpace:
+			{
+				const auto worldspace = form->As<RE::TESWorldSpace>();
+				return currentWorldspace && (currentWorldspace == worldspace || currentWorldspace->parentWorld == worldspace);
+			}
 		default:
 			break;
 		}

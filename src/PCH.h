@@ -6,6 +6,7 @@
 #include <ranges>
 
 #include "RE/Skyrim.h"
+#include "REX/REX/Singleton.h"
 #include "SKSE/SKSE.h"
 
 #include <MergeMapperPluginAPI.h>
@@ -13,6 +14,7 @@
 #include <ankerl/unordered_dense.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <srell.hpp>
+#include <boost/container_hash/hash.hpp>
 
 #include <CLibUtil/distribution.hpp>
 #include <CLibUtil/hash.hpp>
@@ -20,7 +22,7 @@
 #include <CLibUtil/rng.hpp>
 #include <CLibUtil/string.hpp>
 #include <ClibUtil/simpleINI.hpp>
-#include <ClibUtil/singleton.hpp>
+
 #include <ClibUtil/editorID.hpp>
 
 #define DLLEXPORT __declspec(dllexport)
@@ -29,7 +31,6 @@ namespace logger = SKSE::log;
 using namespace std::literals;
 
 using namespace clib_util;
-using namespace clib_util::singleton;
 using SeedRNG = clib_util::RNG;
 
 // for visting variants
@@ -45,9 +46,12 @@ template <class K, class D>
 using Map = ankerl::unordered_dense::map<K, D>;
 template <class T>
 using Set = ankerl::unordered_dense::set<T>;
+template <class T>
+using OrderedSet = std::set<T>;
 
 using FormIDSet = Set<RE::FormID>;
 using FormIDOrSet = std::variant<RE::FormID, FormIDSet>;
+using FormIDOrderedSet = OrderedSet<RE::FormID>;
 
 template <class T>
 using FormIDMap = Map<RE::FormID, T>;

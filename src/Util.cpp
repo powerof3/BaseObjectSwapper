@@ -55,4 +55,23 @@ namespace util
 			return GetFormID(a_str);
 		}
 	}
+
+	FormIDOrderedSet GetFormIDOrderedSet(const std::string& a_str)
+	{
+		FormIDOrderedSet set;
+		if (a_str.contains(",")) {
+			const auto IDStrs = string::split(a_str, ",");
+			for (auto& IDStr : IDStrs) {
+				if (auto formID = GetFormID(IDStr); formID != 0) {
+					set.emplace(formID);
+				} else {
+					logger::error("\t\t\tfailed to process {} (formID not found)", IDStr);
+				}
+			}
+			return set;
+		} else if (auto formID = GetFormID(a_str); formID != 0) {
+			set.emplace(formID);
+		}
+		return set;
+	}
 }

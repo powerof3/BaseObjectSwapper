@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 set(NAME "po3_BaseObjectSwapper" CACHE STRING "")
-set(VERSION 3.1.1 CACHE STRING "")
+set(VERSION 3.4.1 CACHE STRING "")
 set(VR_VERSION 1)
 set(AE_VERSION 1)
 
@@ -134,6 +134,7 @@ else ()
 endif()
 
 find_package(unordered_dense CONFIG REQUIRED)
+find_package(boost_container_hash CONFIG REQUIRED)
 
 find_path(SRELL_INCLUDE_DIRS "srell.hpp")
 find_path(MERGEMAPPER_INCLUDE_DIRS "MergeMapperPluginAPI.h")
@@ -200,6 +201,7 @@ target_link_libraries(
 	PRIVATE
 		${CommonLibName}::${CommonLibName}
 		unordered_dense::unordered_dense
+		Boost::container_hash
 )
 
 target_precompile_headers(
