@@ -1,17 +1,7 @@
-#include "Util.h"
+#include "RE.h"
 
-namespace util
+namespace RE
 {
-	std::vector<std::string> split_with_regex(const std::string& a_str, const boost::regex& a_regex)
-	{
-		boost::sregex_token_iterator iter(a_str.begin(),
-			a_str.end(),
-			a_regex,
-			-1);
-		boost::sregex_token_iterator end{};
-		return { iter, end };
-	}
-
 	std::pair<RE::FormID, RE::TESForm*> GetFormWithID(const std::string& a_str, bool a_resolveForm)
 	{
 		if (const auto splitID = REX::STR::SPLIT(a_str, "~"); splitID.size() == 2) {
@@ -93,6 +83,52 @@ namespace util
 		if (const auto location = a_ref->GetEditorLocation()) {
 			return location;
 		}
+
 		return a_ref->GetSaveParentCell();
+	}
+
+	RE::TESObjectCELL* GetParentCell(const RE::TESObjectREFR* a_ref)
+	{
+		/*auto parentCell = a_ref->GetParentCell();
+		if (!parentCell) {
+			parentCell = a_ref->GetSaveParentCell();
+		}
+		return parentCell;*/
+
+		return a_ref->GetSaveParentCell();
+	}
+
+	bool IsFixedPersistentForm(const RE::TESBoundObject* a_base)
+	{
+		if (!a_base) {
+			return false;
+		}
+		
+		switch (a_base->GetFormType()) {
+		case RE::FormType::Sound:
+		case RE::FormType::Activator:
+		case RE::FormType::Container:
+		case RE::FormType::Door:
+		case RE::FormType::Static:
+		case RE::FormType::StaticCollection:
+		case RE::FormType::Tree:
+		case RE::FormType::Flora:
+		case RE::FormType::Furniture:
+		case RE::FormType::LeveledNPC:
+			return true;
+		default:
+			return false;
+		}
+	}
+
+	RE::TESWorldSpace* GetPersistentRefWorldSpace(const RE::TESObjectREFR* a_ref)
+	{
+		if (const auto xPersistentCell = a_ref->extraList.GetByType<RE::ExtraPersistentCell>()) {
+			if (const auto persistentCell = xPersistentCell->persistentCell; persistentCell && persistentCell->IsExteriorCell()) {
+				return persistentCell->worldSpace;
+			}
+		}
+
+		return nullptr;
 	}
 }

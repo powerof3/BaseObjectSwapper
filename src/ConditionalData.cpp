@@ -12,7 +12,7 @@ ConditionFilters::ConditionFilters(std::string a_conditionID, std::vector<std::s
 			condition.erase(0, 1);
 			negate = true;
 		}
-		if (const auto [processedID, form] = util::GetFormWithID(condition, true); processedID != 0) {
+		if (const auto [processedID, form] = RE::GetFormWithID(condition, true); processedID != 0) {
 			if (form && !form->IsDynamicForm()) {
 				negate ? NOT.emplace_back(form) : MATCH.emplace_back(form);
 			} else {

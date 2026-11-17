@@ -38,7 +38,7 @@ void BOS_RNG::Seed(const RE::TESObjectREFR* a_ref, std::uint64_t a_entryHash)
 		break;
 	case CHANCE_TYPE::kLocationHash:
 		{
-			const auto locOrCell = a_ref ? util::GetLocationOrCell(a_ref) : nullptr;
+			const auto locOrCell = a_ref ? RE::GetLocationOrCell(a_ref) : nullptr;
 			const auto base = a_ref ? a_ref->GetBaseObject() : nullptr;
 
 			if (locOrCell && base) {

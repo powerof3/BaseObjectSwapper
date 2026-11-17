@@ -125,7 +125,16 @@ void ObjectProperties::assign_record_flags(const std::string& a_str, bool a_unse
 ObjectProperties::ObjectProperties(const std::string& a_str)
 {
 	if (distribution::is_valid_entry(a_str)) {
-		auto split_properties = util::split_with_regex(a_str, regex::string);
+		constexpr auto split_with_regex = [](const std::string& a_str, const boost::regex& a_regex) -> std::vector<std::string> {
+			boost::sregex_token_iterator iter(a_str.begin(),
+				a_str.end(),
+				a_regex,
+				-1);
+			boost::sregex_token_iterator end{};
+			return { iter, end };
+		};
+
+		auto split_properties = split_with_regex(a_str, regex::string);
 		for (const auto& propStr : split_properties) {
 			if (propStr.contains("pos")) {
 				location = Point3Range(propStr);
@@ -145,10 +154,20 @@ bool ObjectProperties::IsValid() const
 	return location || rotation || refScale || recordFlagsSet != 0 || recordFlagsUnset != 0;
 }
 
+bool ObjectProperties::ChangesXYLocation() const
+{
+	return location && (!location->relative || location->x != FloatRange{} || location->y != FloatRange{});
+}
+
+bool ObjectProperties::ChangesRecordFlag(std::uint32_t a_flag) const
+{
+	return ((recordFlagsSet | recordFlagsUnset) & a_flag) != 0;
+}
+
 void ObjectProperties::SetChance(const RNGParams& a_chance, std::uint64_t a_entryHash)
 {
 	chance = a_chance;
-	
+
 	entryHash = a_entryHash;
 	boost::hash_combine(entryHash, 'TRF');
 }

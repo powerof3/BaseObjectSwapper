@@ -34,10 +34,7 @@ struct ConditionalInput
 		base(a_form),
 		currentWorldspace(a_ref->GetWorldspace())
 	{
-		currentCell = a_ref->GetParentCell();
-		if (!currentCell) {
-			currentCell = a_ref->GetSaveParentCell();
-		}
+		currentCell = RE::GetParentCell(a_ref);
 		if (currentCell) {
 			currentCellEDID = editorID::get_editorID(currentCell);
 		}

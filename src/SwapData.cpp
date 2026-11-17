@@ -33,7 +33,7 @@ namespace FormSwap
 	void ObjectData::GetProperties(const std::string& a_path, const std::string& a_str, std::function<void(RE::FormID, ObjectData&)> a_func)
 	{
 		const auto formPair = REX::STR::SPLIT(a_str, "|");
-		if (const auto baseFormID = util::GetFormID(formPair[0]); baseFormID != 0) {
+		if (const auto baseFormID = RE::GetFormID(formPair[0]); baseFormID != 0) {
 			const Input input(
 				formPair[1],                                        // transform
 				formPair.size() > 2 ? formPair[2] : std::string{},  // traits
@@ -89,8 +89,8 @@ namespace FormSwap
 
 		const auto formPair = REX::STR::SPLIT(a_str, "|");
 
-		if (const auto baseFormID = util::GetFormID(formPair[0]); baseFormID != 0) {
-			if (const auto swapFormID = util::GetSwapFormID(formPair[1]); !swap_empty(swapFormID)) {
+		if (const auto baseFormID = RE::GetFormID(formPair[0]); baseFormID != 0) {
+			if (const auto swapFormID = RE::GetSwapFormID(formPair[1]); !swap_empty(swapFormID)) {
 				auto properties = formPair.size() > 2 ? formPair[2] : std::string{};
 				auto chance = formPair.size() > 3 ? formPair[3] : std::string{};
 
@@ -106,8 +106,8 @@ namespace FormSwap
 			} else {
 				REX::ERROR("\t\t\t\tfail : [{}] (SWAP formID not found)", a_str);
 			}
-		} else if (const auto baseFormIDs = util::GetFormIDOrderedSet(formPair[0]); !baseFormIDs.empty()) {
-			if (auto swapFormIDs = util::GetFormIDOrderedSet(formPair[1]); !swapFormIDs.empty()) {
+		} else if (const auto baseFormIDs = RE::GetFormIDOrderedSet(formPair[0]); !baseFormIDs.empty()) {
+			if (auto swapFormIDs = RE::GetFormIDOrderedSet(formPair[1]); !swapFormIDs.empty()) {
 				auto properties = formPair.size() > 2 ? formPair[2] : std::string{};
 				auto chance = formPair.size() > 3 ? formPair[3] : std::string{};
 

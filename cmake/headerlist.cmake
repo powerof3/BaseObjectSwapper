@@ -4,7 +4,7 @@ set(headers ${headers}
 	src/Manager.h
 	src/ObjectProperties.h
 	src/PCH.h
+	src/RE.h
 	src/RNG.h
 	src/SwapData.h
-	src/Util.h
 )

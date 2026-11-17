@@ -72,6 +72,9 @@ public:
 
 	bool IsValid() const;
 
+	bool ChangesXYLocation() const;
+	bool ChangesRecordFlag(std::uint32_t a_flag) const;
+
 	void SetChance(const RNGParams& a_chance, std::uint64_t a_entryHash);
 	void SetTransform(RE::TESObjectREFR* a_refr) const;
 	void SetRecordFlags(RE::TESObjectREFR* a_refr) const;

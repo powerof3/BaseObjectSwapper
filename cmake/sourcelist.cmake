@@ -4,8 +4,8 @@ set(sources ${sources}
 	src/Manager.cpp
 	src/ObjectProperties.cpp
 	src/PCH.cpp
+	src/RE.cpp
 	src/RNG.cpp
 	src/SwapData.cpp
-	src/Util.cpp
 	src/main.cpp
 )
