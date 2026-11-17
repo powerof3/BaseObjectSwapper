@@ -87,4 +87,12 @@ namespace util
 		}
 		return set;
 	}
+
+	RE::TESForm* GetLocationOrCell(const RE::TESObjectREFR* a_ref)
+	{
+		if (const auto location = a_ref->GetEditorLocation()) {
+			return location;
+		}
+		return a_ref->GetSaveParentCell();
+	}
 }

@@ -1,8 +1,10 @@
 #include "ObjectProperties.h"
 
-RandValueParams::RandValueParams(Chance a_chance, const RE::TESObjectREFR* a_ref) :
-	rng(a_chance, a_ref)
-{}
+RandValueParams::RandValueParams(const RNGParams& a_chance, const RE::TESObjectREFR* a_ref, std::uint64_t a_entryHash) :
+	rng(a_chance)
+{
+	rng.Seed(a_ref, a_entryHash);
+}
 
 FloatRange::FloatRange(const std::string& a_str)
 {
@@ -32,9 +34,9 @@ void FloatRange::convert_to_radians()
 	max = RE::deg_to_rad(max);
 }
 
-float FloatRange::GetRandomValue(const RandValueParams& a_params) const
+float FloatRange::GetRandomValue(RandValueParams& a_params) const
 {
-	float value = is_exact() ? min : a_params.rng.generate(min, max);
+	float value = is_exact() ? min : a_params.rng.Generate(min, max);
 
 	if (a_params.clamp) {
 		value = std::clamp(value, a_params.clampMin, a_params.clampMax);
@@ -51,7 +53,7 @@ ScaleRange::ScaleRange(const std::string& a_str) :
 	}
 }
 
-void ScaleRange::SetScale(RE::TESObjectREFR* a_ref, const RandValueParams& a_params) const
+void ScaleRange::SetScale(RE::TESObjectREFR* a_ref, RandValueParams& a_params) const
 {
 	if (absolute) {
 		a_ref->refScale = static_cast<std::uint16_t>(value.GetRandomValue(a_params));
@@ -91,12 +93,16 @@ bool Point3Range::is_exact() const
 	return min() == max();
 }
 
-RE::NiPoint3 Point3Range::GetRandomValue(const RandValueParams& a_params) const
+RE::NiPoint3 Point3Range::GetRandomValue(RandValueParams& a_params) const
 {
-	return is_exact() ? min() : RE::NiPoint3{ x.GetRandomValue(a_params), y.GetRandomValue(a_params), z.GetRandomValue(a_params) };
+	if (is_exact()) {
+		return min();
+	}
+
+	return RE::NiPoint3{ x.GetRandomValue(a_params), y.GetRandomValue(a_params), z.GetRandomValue(a_params) };
 }
 
-void Point3Range::SetTransform(RE::NiPoint3& a_inPoint, const RandValueParams& a_params) const
+void Point3Range::SetTransform(RE::NiPoint3& a_inPoint, RandValueParams& a_params) const
 {
 	if (relative) {
 		a_inPoint += GetRandomValue(a_params);
@@ -139,15 +145,18 @@ bool ObjectProperties::IsValid() const
 	return location || rotation || refScale || recordFlagsSet != 0 || recordFlagsUnset != 0;
 }
 
-void ObjectProperties::SetChance(Chance a_chance)
+void ObjectProperties::SetChance(const RNGParams& a_chance, std::uint64_t a_entryHash)
 {
 	chance = a_chance;
+	
+	entryHash = a_entryHash;
+	boost::hash_combine(entryHash, 'TRF');
 }
 
 void ObjectProperties::SetTransform(RE::TESObjectREFR* a_refr) const
 {
 	if (location || rotation || refScale) {
-		RandValueParams params(chance, a_refr);
+		RandValueParams params(chance, a_refr, entryHash);
 		if (location) {
 			location->SetTransform(a_refr->data.location, params);
 		}

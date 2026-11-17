@@ -1,5 +1,76 @@
 #include "RNG.h"
 
+BOS_RNG::BOS_RNG(const RNGBase& a_base) :
+	RNGBase(a_base)
+{}
+
+BOS_RNG::BOS_RNG(const RNGBase& a_base, std::uint64_t a_entryHash) :
+	RNGBase(a_base)
+{
+	std::uint64_t mixSeed = seed;
+	boost::hash_combine(mixSeed, a_entryHash);
+	rng.emplace(mixSeed);
+}
+
+void BOS_RNG::Seed(const RE::TESObjectREFR* a_ref, std::uint64_t a_entryHash)
+{
+	if (rng) {
+		return;
+	}
+
+	const auto make_seed = [&](std::uint64_t a_seed) {
+		std::uint64_t mixSeed = a_seed;
+		boost::hash_combine(mixSeed, a_entryHash);
+		boost::hash_combine(mixSeed, seed);
+		return mixSeed;
+	};
+
+	switch (type) {
+	case CHANCE_TYPE::kRefHash:
+		{
+			if (a_ref) {
+				seed = make_seed(get_form_seed(a_ref));
+			} else {
+				type = CHANCE_TYPE::kRandom;
+				seed = seed != 0 ? make_seed(0) : 0;
+			}
+		}
+		break;
+	case CHANCE_TYPE::kLocationHash:
+		{
+			const auto locOrCell = a_ref ? util::GetLocationOrCell(a_ref) : nullptr;
+			const auto base = a_ref ? a_ref->GetBaseObject() : nullptr;
+
+			if (locOrCell && base) {
+				auto mixSeed = make_seed(get_form_seed(locOrCell));
+				boost::hash_combine(mixSeed, get_form_seed(base));
+				seed = mixSeed;
+			} else if (a_ref) {
+				seed = make_seed(get_form_seed(a_ref));
+			} else {
+				type = CHANCE_TYPE::kRandom;
+				seed = seed != 0 ? make_seed(0) : 0;
+			}
+		}
+		break;
+	case CHANCE_TYPE::kRandom:
+		{
+			if (seed != 0) {
+				seed = make_seed(a_ref ? get_form_seed(a_ref) : 0);
+			}
+		}
+		break;
+	default:
+		break;
+	}
+
+	if (type == CHANCE_TYPE::kRandom && seed == 0) {
+		rng.emplace(std::chrono::high_resolution_clock::now().time_since_epoch().count());
+	} else {
+		rng.emplace(seed);
+	}
+}
+
 std::uint64_t BOS_RNG::get_form_seed(const RE::TESForm* a_form)
 {
 	if (a_form->IsDynamicForm()) {
@@ -18,63 +89,21 @@ std::uint64_t BOS_RNG::get_form_seed(const RE::TESForm* a_form)
 	return result;
 }
 
-BOS_RNG::BOS_RNG(const Chance& a_chance, const RE::TESObjectREFR* a_ref) :
-	type(a_chance.chanceType)
-{
-	switch (type) {
-	case CHANCE_TYPE::kRefHash:
-		seed = get_form_seed(a_ref);
-		break;
-	case CHANCE_TYPE::kLocationHash:
-		{
-			auto base = a_ref->GetBaseObject();
-			auto location = a_ref->GetEditorLocation();
-			auto cell = a_ref->GetSaveParentCell();
-
-			if (!location && !cell) {
-				seed = get_form_seed(a_ref);
-			} else {
-				RE::TESForm* cellOrLoc = nullptr;
-				if (location) {
-					cellOrLoc = location;
-				} else if (cell) {
-					cellOrLoc = cell;
-				}
-				// generate hash based on location + baseID
-				std::uint64_t result = 0;
-				boost::hash_combine(result, get_form_seed(cellOrLoc));
-				boost::hash_combine(result, get_form_seed(base));
-				seed = result;
-			}
-		}
-		break;
-	case CHANCE_TYPE::kRandom:
-		seed = a_chance.seed;
-		break;
-	default:
-		break;
-	}
-}
-
-BOS_RNG::BOS_RNG(const Chance& a_chance) :
-	type(a_chance.chanceType),
-	seed(a_chance.seed)
-{}
-
-Chance::Chance(const std::string& a_str)
+RNGParams::RNGParams(const std::string& a_str)
 {
 	if (distribution::is_valid_entry(a_str)) {
-		if (a_str.contains("chance")) {
-			if (a_str.contains("R")) {
-				chanceType = CHANCE_TYPE::kRandom;
-			} else if (a_str.contains("L")) {
-				chanceType = CHANCE_TYPE::kLocationHash;
-			} else {
-				chanceType = CHANCE_TYPE::kRefHash;
-			}
+		if (a_str.contains("chanceR")) {
+			type = CHANCE_TYPE::kRandom;
+		} else if (a_str.contains("chanceL")) {
+			type = CHANCE_TYPE::kLocationHash;
+		} else if (a_str.contains("chance")) {
+			type = CHANCE_TYPE::kRefHash;
+		} else {
+			return;
+		}
 
-			if (boost::cmatch match; boost::regex_search(a_str.c_str(), match, regex::generic)) {
-				const auto chanceOptions = REX::STR::SPLIT(match[1].str(), ",");
+		if (boost::cmatch match; boost::regex_search(a_str.c_str(), match, regex::generic)) {
+			if (const auto chanceOptions = REX::STR::SPLIT(match[1].str(), ","); !chanceOptions.empty()) {
 				chanceValue = REX::STR::TO_NUM<float>(chanceOptions[0]);
 				seed = chanceOptions.size() > 1 ? REX::STR::TO_NUM<std::uint64_t>(chanceOptions[1]) : 0;
 			}
@@ -82,11 +111,11 @@ Chance::Chance(const std::string& a_str)
 	}
 }
 
-bool Chance::PassedChance(const RE::TESObjectREFR* a_ref) const
+bool RNGParams::PassedChance(BOS_RNG& a_rng, const RE::TESObjectREFR* a_ref, std::uint64_t a_entryHash) const
 {
 	if (chanceValue < 100.0f) {
-		BOS_RNG rng(*this, a_ref);
-		if (const auto rngValue = rng.generate<float>(0.0f, 100.0f); rngValue > chanceValue) {
+		a_rng.Seed(a_ref, a_entryHash);
+		if (const auto rngValue = a_rng.Generate<float>(0.0f, 100.0f); rngValue > chanceValue) {
 			return false;
 		}
 	}

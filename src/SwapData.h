@@ -10,6 +10,8 @@ namespace FormSwap
 	public:
 		struct Input
 		{
+			[[nodiscard]] std::uint64_t GenerateHash() const;
+			
 			std::string properties;
 			std::string chance;
 			std::string record;
@@ -24,7 +26,8 @@ namespace FormSwap
 
 		// members
 		ObjectProperties properties{};
-		Chance           chance{};
+		RNGParams        chance{};
+		std::uint64_t    entryHash{ 0 };
 
 		// used for logging conflicts
 		std::string record{};

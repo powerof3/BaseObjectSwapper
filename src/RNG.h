@@ -1,5 +1,7 @@
 #pragma once
 
+#include <XoshiroCpp.hpp>
+
 enum class CHANCE_TYPE
 {
 	kRandom,
@@ -7,40 +9,48 @@ enum class CHANCE_TYPE
 	kLocationHash
 };
 
-struct Chance
+struct RNGBase
 {
-public:
-	Chance() = default;
-	explicit Chance(const std::string& a_str);
+	RNGBase() = default;
 
-	bool PassedChance(const RE::TESObjectREFR* a_ref) const;
-
-	// members
-	CHANCE_TYPE   chanceType{ CHANCE_TYPE::kRefHash };
-	float         chanceValue{ 100.0f };
+	CHANCE_TYPE   type{ CHANCE_TYPE::kRefHash };
 	std::uint64_t seed{ 0 };
 };
 
-struct BOS_RNG
+struct BOS_RNG : RNGBase
 {
-public:
-	BOS_RNG() = default;
-	BOS_RNG(const Chance& a_chance, const RE::TESObjectREFR* a_ref);
-	BOS_RNG(const Chance& a_chance);
+	BOS_RNG(const RNGBase& a_base);
+	BOS_RNG(const RNGBase& a_base, std::uint64_t a_entryHash);
 
-template <class T>
-	T generate(T a_min, T a_max) const
+	void Seed(const RE::TESObjectREFR* a_ref, std::uint64_t a_entryHash);
+
+	template <class T>
+	T Generate(T a_min, T a_max)
 	{
-		if (type == CHANCE_TYPE::kRandom && seed == 0) {
-			return REX::TRandom<T>().Generate(a_min, a_max);
+		if (!rng) {
+			rng.emplace(std::chrono::high_resolution_clock::now().time_since_epoch().count());
 		}
-		return REX::TRandom<T>(seed).Generate(a_min, a_max);
+		
+		if constexpr (std::is_integral_v<T>) {
+			return std::uniform_int_distribution<T>(a_min, a_max)(*rng);
+		} else {
+			return std::uniform_real_distribution<T>(a_min, a_max)(*rng);
+		}
 	}
 
-	// members
-	CHANCE_TYPE   type;
-	std::uint64_t seed{ 0 };
-
 private:
-	std::uint64_t get_form_seed(const RE::TESForm* a_form);
+	static std::uint64_t get_form_seed(const RE::TESForm* a_form);
+
+	std::optional<XoshiroCpp::Xoshiro256StarStar> rng{};
+};
+
+struct RNGParams : RNGBase
+{
+	RNGParams() = default;
+	explicit RNGParams(const std::string& a_str);
+
+	bool PassedChance(BOS_RNG& a_rng, const RE::TESObjectREFR* a_ref, std::uint64_t a_entryHash) const;
+
+	// members
+	float chanceValue{ 100.0f };
 };
