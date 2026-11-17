@@ -53,5 +53,5 @@ namespace FormSwap
 	using SwapFormDataVec = std::vector<SwapFormData>;
 	using SwapFormDataConditional = ConditionalData<SwapFormData>;
 
-	using SwapFormResult = std::pair<RE::TESBoundObject*, std::optional<ObjectProperties>>;
+	using SwapFormResult = std::pair<RE::TESBoundObject*, const ObjectProperties*>;
 }

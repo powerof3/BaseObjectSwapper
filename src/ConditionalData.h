@@ -32,15 +32,19 @@ struct ConditionalInput
 	ConditionalInput(const RE::TESObjectREFR* a_ref, const RE::TESForm* a_form) :
 		ref(a_ref),
 		base(a_form),
-		currentWorldspace(a_ref->GetWorldspace()),
-		currentLocation(a_ref->GetCurrentLocation())
+		currentWorldspace(a_ref->GetWorldspace())
 	{
 		currentCell = a_ref->GetParentCell();
 		if (!currentCell) {
 			currentCell = a_ref->GetSaveParentCell();
 		}
-		currentRegionList = currentCell ? currentCell->GetRegionList(false) : nullptr;
+		if (currentCell) {
+			currentCellEDID = editorID::get_editorID(currentCell);
+		}
 	}
+
+	[[nodiscard]] RE::BGSLocation*   GetCurrentLocation() const;
+	[[nodiscard]] RE::TESRegionList* GetCurrentRegionList() const;
 
 	[[nodiscard]] bool IsValid(RE::FormID a_formID) const;
 	[[nodiscard]] bool IsValid(RE::TESForm* a_form) const;
@@ -54,6 +58,9 @@ struct ConditionalInput
 	const RE::TESForm*       base;
 	RE::TESObjectCELL*       currentCell;
 	RE::TESWorldSpace*       currentWorldspace;
-	RE::BGSLocation*         currentLocation;
-	RE::TESRegionList*       currentRegionList;
+	std::string              currentCellEDID;
+
+private:
+	mutable std::optional<RE::BGSLocation*>   lazyLocation{};
+	mutable std::optional<RE::TESRegionList*> lazyRegionList{};
 };

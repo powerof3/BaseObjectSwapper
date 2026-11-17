@@ -25,6 +25,23 @@ ConditionFilters::ConditionFilters(std::string a_conditionID, std::vector<std::s
 	}
 }
 
+RE::BGSLocation* ConditionalInput::GetCurrentLocation() const
+{
+	if (!lazyLocation) {
+		lazyLocation = ref->GetCurrentLocation();
+	}
+	return *lazyLocation;
+}
+
+RE::TESRegionList* ConditionalInput::GetCurrentRegionList() const
+
+{
+	if (!lazyRegionList) {
+		lazyRegionList = currentCell ? currentCell->GetRegionList(false) : nullptr;
+	}
+	return *lazyRegionList;
+}
+
 bool ConditionalInput::IsValid(RE::FormID a_formID) const
 {
 	return IsValid(RE::TESForm::LookupByID(a_formID));
@@ -37,12 +54,13 @@ bool ConditionalInput::IsValid(RE::TESForm* a_form) const
 		case RE::FormType::Location:
 			{
 				const auto location = a_form->As<RE::BGSLocation>();
+				const auto currentLocation = GetCurrentLocation();
 				return currentLocation && (currentLocation == location || currentLocation->IsParent(location));
 			}
 		case RE::FormType::Region:
 			{
 				if (const auto region = a_form->As<RE::TESRegion>()) {
-					if (currentRegionList) {
+					if (const auto currentRegionList = GetCurrentRegionList()) {
 						return std::ranges::any_of(*currentRegionList, [&](const auto& regionInList) {
 							return regionInList && regionInList == region;
 						});
@@ -53,7 +71,11 @@ bool ConditionalInput::IsValid(RE::TESForm* a_form) const
 		case RE::FormType::Keyword:
 			{
 				const auto keyword = a_form->As<RE::BGSKeyword>();
-				return currentLocation && currentLocation->HasKeyword(keyword) || ref->HasKeyword(keyword);
+				if (ref->HasKeyword(keyword)) {
+					return true;
+				}
+				const auto currentLocation = GetCurrentLocation();
+				return currentLocation && currentLocation->HasKeyword(keyword);
 			}
 		case RE::FormType::Cell:
 			return currentCell == a_form;
@@ -72,11 +94,11 @@ bool ConditionalInput::IsValid(RE::TESForm* a_form) const
 
 bool ConditionalInput::IsValid(const std::string& a_edid) const
 {
-	if (currentCell && REX::STR::IEQUALS(editorID::get_editorID(currentCell), a_edid)) {
+	if (currentCell && REX::STR::IEQUALS(currentCellEDID, a_edid)) {
 		return true;
 	}
 
-	if (currentLocation && currentLocation->HasKeywordString(a_edid)) {
+	if (auto currentLocation = GetCurrentLocation(); currentLocation && currentLocation->HasKeywordString(a_edid)) {
 		return true;
 	}
 

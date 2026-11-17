@@ -164,17 +164,17 @@ namespace FormSwap
 				if (a_input->IsValid(filters)) {
 					for (auto& swapData : swapDataVec | std::ranges::views::reverse) {
 						if (auto swapObject = swapData.GetSwapBase(a_ref)) {
-							return { swapObject, swapData.properties };
+							return { swapObject, &swapData.properties };
 						}
 					}
 				}
 			}
 		}
 
-		return { nullptr, std::nullopt };
+		return {};
 	}
 
-	std::optional<ObjectProperties> Manager::GetObjectPropertiesConditional(const RE::TESObjectREFR* a_ref, const RE::TESForm* a_base, std::optional<ConditionalInput>& a_input)
+	const ObjectProperties* Manager::GetObjectPropertiesConditional(const RE::TESObjectREFR* a_ref, const RE::TESForm* a_base, std::optional<ConditionalInput>& a_input)
 	{
 		if (const auto it = refPropertiesConditional.find(a_base->GetFormID()); it != refPropertiesConditional.end()) {
 			if (!a_input) {
@@ -185,14 +185,14 @@ namespace FormSwap
 				if (a_input->IsValid(filters)) {
 					for (auto& objectData : objectDataVec | std::ranges::views::reverse) {
 						if (objectData.HasValidProperties(a_ref)) {
-							return objectData.properties;
+							return &objectData.properties;
 						}
 					}
 				}
 			}
 		}
 
-		return std::nullopt;
+		return nullptr;
 	}
 
 	void Manager::InsertLeveledItemRef(const RE::TESObjectREFR* a_refr)
@@ -207,7 +207,7 @@ namespace FormSwap
 
 	SwapFormResult Manager::GetSwapData(const RE::TESObjectREFR* a_ref, const RE::TESForm* a_base)
 	{
-		SwapFormResult                  swapData{ nullptr, std::nullopt };
+		SwapFormResult                  swapData{};
 		std::optional<ConditionalInput> input;
 
 		// get base
@@ -215,12 +215,12 @@ namespace FormSwap
 			if (const auto it = a_map.find(a_form->GetFormID()); it != a_map.end()) {
 				for (auto& swapData : it->second | std::ranges::views::reverse) {
 					if (auto swapObject = swapData.GetSwapBase(a_ref)) {
-						return { swapObject, swapData.properties };
+						return { swapObject, &swapData.properties };
 					}
 				}
 			}
-			return { nullptr, std::nullopt };
-		};
+			return {};
+		 };
 
 		// references -> conditional forms -> forms
 		if (!a_ref->IsDynamicForm()) {
@@ -247,18 +247,18 @@ namespace FormSwap
 		}
 
 		// get object properties
-		const auto get_properties = [&](const RE::TESForm* a_form) -> std::optional<ObjectProperties> {
+		const auto get_properties = [&](const RE::TESForm* a_form) -> const ObjectProperties* {
 			if (const auto it = refProperties.find(a_form->GetFormID()); it != refProperties.end()) {
 				for (auto& objectData : it->second | std::ranges::views::reverse) {
 					if (objectData.HasValidProperties(a_ref)) {
-						return objectData.properties;
+						return &objectData.properties;
 					}
 				}
 			}
-			return std::nullopt;
+			return nullptr;
 		};
 
-		constexpr auto has_properties = [](const std::optional<ObjectProperties>& a_result) {
+		constexpr auto has_properties = [](const ObjectProperties* a_result) {
 			return a_result && a_result->IsValid();
 		};
 

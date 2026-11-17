@@ -11,9 +11,9 @@ namespace FormSwap
 
 		void PrintConflicts() const;
 
-		SwapFormResult                  GetSwapData(const RE::TESObjectREFR* a_ref, const RE::TESForm* a_base);
-		SwapFormResult                  GetSwapFormConditional(const RE::TESObjectREFR* a_ref, const RE::TESForm* a_base, std::optional<ConditionalInput>& a_input);
-		std::optional<ObjectProperties> GetObjectPropertiesConditional(const RE::TESObjectREFR* a_ref, const RE::TESForm* a_base, std::optional<ConditionalInput>& a_input);
+		SwapFormResult          GetSwapData(const RE::TESObjectREFR* a_ref, const RE::TESForm* a_base);
+		SwapFormResult          GetSwapFormConditional(const RE::TESObjectREFR* a_ref, const RE::TESForm* a_base, std::optional<ConditionalInput>& a_input);
+		const ObjectProperties* GetObjectPropertiesConditional(const RE::TESObjectREFR* a_ref, const RE::TESForm* a_base, std::optional<ConditionalInput>& a_input);
 
 		void InsertLeveledItemRef(const RE::TESObjectREFR* a_refr);
 		bool IsLeveledItemRefSwapped(const RE::TESObjectREFR* a_refr) const;
@@ -29,7 +29,7 @@ namespace FormSwap
 		FormIDMap<ObjectDataVec>         refProperties{};
 		FormIDMap<ObjectDataConditional> refPropertiesConditional{};
 
-		Set<RE::FormID> swappedLeveledItemRefs{};
+		ConcurrentSet<RE::FormID> swappedLeveledItemRefs{};
 
 		bool           hasConflicts{ false };
 		std::once_flag init{};
