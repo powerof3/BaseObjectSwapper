@@ -6,49 +6,94 @@ namespace FormSwap
 	{
 		std::uint64_t seed = 0;
 		boost::hash_combine(seed, record);
-		boost::hash_combine(seed, path);
 		return seed;
 	}
 
-	ObjectData::ObjectData(const Input& a_input) :
-		properties(a_input.properties),
-		chance(a_input.chance),
-		record(a_input.record),
-		path(a_input.path)
+	const ObjectProperties* IndexedProperties::GetOrCreate(const std::string& a_str)
 	{
-		entryHash = a_input.GenerateHash();
-		properties.SetChance(chance, entryHash);
+		if (a_str.empty()) {
+			return nullptr;
+		}
+		const auto [it, result] = index.try_emplace(a_str, nullptr);
+		if (result) {
+			if (ObjectProperties props(a_str); props.IsValid()) {
+				it->second = storage.emplace_back(std::make_unique<const ObjectProperties>(std::move(props))).get();
+			}
+		}
+		return it->second;
+	}
+
+	void IndexedProperties::ReleaseIndex()
+	{
+		StringMap<const ObjectProperties*>().swap(index);
+		storage.shrink_to_fit();
+	}
+
+	ObjectData::ObjectData(const Input& a_input, IndexedProperties& a_properties) :
+		properties(a_properties.GetOrCreate(a_input.properties)),
+		chance(a_input.chance),
+		entryHash(a_input.GenerateHash())
+	{}
+
+	std::uint64_t ObjectData::GetPropertiesHash() const
+	{
+		std::uint64_t hash = entryHash;
+		boost::hash_combine(hash, 'TRF');
+		return hash;
 	}
 
 	bool ObjectData::HasValidProperties(const RE::TESObjectREFR* a_ref) const
 	{
-		if (!properties.IsValid()) {
+		if (!properties) {
 			return false;
 		}
-
 		BOS_RNG rng(chance);
 		return chance.PassedChance(rng, a_ref, entryHash);
 	}
 
-	void ObjectData::GetProperties(const std::string& a_path, const std::string& a_str, std::function<void(RE::FormID, ObjectData&)> a_func)
+	void ObjectData::ApplyProperties(RE::TESObjectREFR* a_ref) const
+	{
+		properties->SetTransform(a_ref, chance, GetPropertiesHash());
+		properties->SetRecordFlags(a_ref);
+	}
+
+	void ObjectData::GetProperties(const std::string& a_str, IndexedProperties& a_properties, bool a_resolveForm, std::function<void(RE::FormID, const RE::TESForm*, ObjectData&&)> a_func)
 	{
 		const auto formPair = REX::STR::SPLIT(a_str, "|");
-		if (const auto baseFormID = RE::GetFormID(formPair[0]); baseFormID != 0) {
+		if (const auto [baseFormID, baseForm] = RE::GetFormWithID(formPair[0], a_resolveForm); baseFormID != 0) {
 			const Input input(
 				formPair[1],                                        // transform
 				formPair.size() > 2 ? formPair[2] : std::string{},  // traits
-				a_str,
-				a_path);
-			ObjectData objectData(input);
-			a_func(baseFormID, objectData);
+				a_str);
+			a_func(baseFormID, baseForm, ObjectData(input, a_properties));
 		} else {
 			REX::ERROR("\t\t\t\tfail : [{}] (BASE formID not found)", a_str);
 		}
 	}
 
-	SwapFormData::SwapFormData(FormIDOrSet a_id, const Input& a_input) :
-		ObjectData(a_input),
-		formIDSet(std::move(a_id))
+	SwapTargets SwapFormData::make_targets(const FormIDOrSet& a_id)
+	{
+		if (const auto formID = std::get_if<RE::FormID>(&a_id)) {
+			return RE::TESForm::LookupByID<RE::TESBoundObject>(*formID);
+		}
+
+		const auto&                      ids = std::get<FormIDSet>(a_id);
+		std::vector<RE::TESBoundObject*> targets;
+		targets.reserve(ids.size());
+		for (const auto id : ids) {
+			targets.emplace_back(RE::TESForm::LookupByID<RE::TESBoundObject>(id));
+		}
+		return targets;
+	}
+
+	SwapFormData::SwapFormData(const FormIDOrSet& a_id, const Input& a_input, IndexedProperties& a_properties) :
+		ObjectData(a_input, a_properties),
+		targets(make_targets(a_id))
+	{}
+
+	SwapFormData::SwapFormData(const ObjectData& a_objectData, const FormIDOrSet& a_id) :
+		ObjectData(a_objectData),
+		targets(make_targets(a_id))
 	{}
 
 	RE::TESBoundObject* SwapFormData::GetSwapBase(const RE::TESObjectREFR* a_ref) const
@@ -58,18 +103,18 @@ namespace FormSwap
 			return nullptr;
 		}
 
-		if (const auto formID = std::get_if<RE::FormID>(&formIDSet); formID) {
-			return RE::TESForm::LookupByID<RE::TESBoundObject>(*formID);
+		if (const auto target = std::get_if<RE::TESBoundObject*>(&targets)) {
+			return *target;
 		}
-		if (const auto& set = std::get<FormIDSet>(formIDSet); !set.empty()) {
+		if (const auto& set = std::get<std::vector<RE::TESBoundObject*>>(targets); !set.empty()) {
 			rng.Seed(a_ref, entryHash);
-			return RE::TESForm::LookupByID<RE::TESBoundObject>(set[rng.Generate<std::size_t>(0, set.size() - 1)]);
+			return set[rng.Generate<std::size_t>(0, set.size() - 1)];
 		}
 
 		return nullptr;
 	}
 
-	void SwapFormData::GetForms(const std::string& a_path, const std::string& a_str, std::function<void(RE::FormID, SwapFormData&)> a_func)
+	void SwapFormData::GetForms(const std::string& a_str, IndexedProperties& a_properties, std::function<void(RE::FormID, SwapFormData&&)> a_func)
 	{
 		constexpr auto swap_empty = [](const FormIDOrSet& a_set) {
 			if (const auto formID = std::get_if<RE::FormID>(&a_set); formID) {
@@ -99,10 +144,9 @@ namespace FormSwap
 					return;
 				}
 
-				const Input  input(properties, chance, a_str, a_path);
-				SwapFormData swapFormData(swapFormID, input);
+				const Input input(properties, chance, a_str);
 
-				a_func(baseFormID, swapFormData);
+				a_func(baseFormID, SwapFormData(swapFormID, input, a_properties));
 			} else {
 				REX::ERROR("\t\t\t\tfail : [{}] (SWAP formID not found)", a_str);
 			}
@@ -113,28 +157,26 @@ namespace FormSwap
 
 				// assign each baseFormID the same swapFormID
 				if (swapFormIDs.size() == 1) {
-					auto swapFormID = *(swapFormIDs.begin());
-					for (auto itBaseFormID : baseFormIDs) {
-						const Input  input(properties, chance, a_str, a_path);
-						SwapFormData swapFormData(swapFormID, input);
+					const Input  input(properties, chance, a_str);
+					SwapFormData swapFormData(*(swapFormIDs.begin()), input, a_properties);
 
-						a_func(itBaseFormID, swapFormData);
+					for (auto itBaseFormID : baseFormIDs) {
+						a_func(itBaseFormID, SwapFormData(swapFormData));
 					}
 
 					// randomly assign each baseFormID to a unique swapFormID
 				} else if (swapFormIDs.size() >= baseFormIDs.size()) {
-					const Input assignInput(properties, chance, a_str, a_path);
-					auto        rng = BOS_RNG(RNGParams(chance), assignInput.GenerateHash());
+					const Input      input(properties, std::string{}, a_str);
+					const ObjectData objectData(input, a_properties);
+
+					auto rng = BOS_RNG(RNGParams(chance), objectData.entryHash);
 
 					for (auto itBaseFormID : baseFormIDs) {
 						const auto setEnd = std::distance(swapFormIDs.begin(), swapFormIDs.end()) - 1;
 						const auto randIt = rng.Generate<std::int64_t>(0, setEnd);
 						auto       swapFormID = swapFormIDs.extract(*std::next(swapFormIDs.begin(), randIt));
 						if (swapFormID) {
-							const Input  input(properties, std::string{}, a_str, a_path);
-							SwapFormData swapFormData(swapFormID.value(), input);
-
-							a_func(itBaseFormID, swapFormData);
+							a_func(itBaseFormID, SwapFormData(objectData, swapFormID.value()));
 						}
 					}
 				} else {

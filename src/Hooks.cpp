@@ -33,7 +33,7 @@ namespace BaseObjectSwapper
 			}
 			return a_properties && (a_properties->ChangesXYLocation() || a_properties->ChangesRecordFlag(RE::TESForm::RecordFlags::kTemporary));
 		}
-		
+
 		RE::TESObjectREFR* ref;
 		RE::TESWorldSpace* worldspace;
 	};
@@ -45,9 +45,12 @@ namespace BaseObjectSwapper
 			return;
 		}
 
-		FormSwap::Manager::GetSingleton()->LoadFormsOnce();
+		auto manager = FormSwap::Manager::GetSingleton();
 
-		const auto& [swapBase, objectProperties] = FormSwap::Manager::GetSingleton()->GetSwapData(a_ref, base);
+		manager->LoadFormsOnce();
+
+		const auto [swapBase, propertySource] = manager->GetSwapData(a_ref, base);
+		const ObjectProperties* objectProperties = propertySource ? propertySource->properties : nullptr;
 
 		const bool shouldSwap = swapBase && swapBase != base && RE::GetParentCell(a_ref);
 		if (!shouldSwap && !objectProperties) {
@@ -64,9 +67,8 @@ namespace BaseObjectSwapper
 			}
 		}
 
-		if (objectProperties) {
-			objectProperties->SetTransform(a_ref);
-			objectProperties->SetRecordFlags(a_ref);
+		if (propertySource) {
+			propertySource->ApplyProperties(a_ref);
 		}
 	}
 

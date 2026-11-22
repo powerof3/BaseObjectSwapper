@@ -20,7 +20,11 @@ void MessageHandler(SKSE::MessagingInterface::Message* a_message)
 		}
 		break;
 	case SKSE::MessagingInterface::kDataLoaded:
-		FormSwap::Manager::GetSingleton()->PrintConflicts();
+		{
+			auto manager = FormSwap::Manager::GetSingleton();
+			manager->Register();
+			manager->PrintConflicts();
+		}
 		break;
 	default:
 		break;

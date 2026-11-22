@@ -19,7 +19,7 @@ namespace BaseObjectSwapper
 			func(a_ref);
 		}
 		static inline REL::Relocation<decltype(thunk)> func;
-		static inline constexpr std::size_t            size{ 0x13 };
+		static inline constexpr std::size_t            idx{ 0x13 };
 
 		static void Install()
 		{
@@ -40,7 +40,7 @@ namespace BaseObjectSwapper
 			func(a_ref, a_object);
 		}
 		static inline REL::Relocation<decltype(thunk)> func;
-		static inline constexpr std::size_t            size{ 0x84 };
+		static inline constexpr std::size_t            idx{ 0x84 };
 
 		static void Install()
 		{

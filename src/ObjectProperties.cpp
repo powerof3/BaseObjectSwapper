@@ -1,9 +1,15 @@
 #include "ObjectProperties.h"
 
 RandValueParams::RandValueParams(const RNGParams& a_chance, const RE::TESObjectREFR* a_ref, std::uint64_t a_entryHash) :
-	rng(a_chance)
+	rng(a_chance),
+	ref(a_ref),
+	entryHash(a_entryHash)
+{}
+
+float RandValueParams::Generate(float a_min, float a_max)
 {
-	rng.Seed(a_ref, a_entryHash);
+	rng.Seed(ref, entryHash);
+	return rng.Generate(a_min, a_max);
 }
 
 FloatRange::FloatRange(const std::string& a_str)
@@ -36,7 +42,7 @@ void FloatRange::convert_to_radians()
 
 float FloatRange::GetRandomValue(RandValueParams& a_params) const
 {
-	float value = is_exact() ? min : a_params.rng.Generate(min, max);
+	float value = is_exact() ? min : a_params.Generate(min, max);
 
 	if (a_params.clamp) {
 		value = std::clamp(value, a_params.clampMin, a_params.clampMax);
@@ -164,18 +170,10 @@ bool ObjectProperties::ChangesRecordFlag(std::uint32_t a_flag) const
 	return ((recordFlagsSet | recordFlagsUnset) & a_flag) != 0;
 }
 
-void ObjectProperties::SetChance(const RNGParams& a_chance, std::uint64_t a_entryHash)
-{
-	chance = a_chance;
-
-	entryHash = a_entryHash;
-	boost::hash_combine(entryHash, 'TRF');
-}
-
-void ObjectProperties::SetTransform(RE::TESObjectREFR* a_refr) const
+void ObjectProperties::SetTransform(RE::TESObjectREFR* a_refr, const RNGParams& a_chance, std::uint64_t a_propertiesHash) const
 {
 	if (location || rotation || refScale) {
-		RandValueParams params(chance, a_refr, entryHash);
+		RandValueParams params(a_chance, a_refr, a_propertiesHash);
 		if (location) {
 			location->SetTransform(a_refr->data.location, params);
 		}

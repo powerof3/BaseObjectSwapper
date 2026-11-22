@@ -13,8 +13,9 @@ struct RNGBase
 {
 	RNGBase() = default;
 
-	CHANCE_TYPE   type{ CHANCE_TYPE::kRefHash };
 	std::uint64_t seed{ 0 };
+	CHANCE_TYPE   type{ CHANCE_TYPE::kRefHash };
+	float         chanceValue{ 100.0f }; // only used by RNGParams
 };
 
 struct BOS_RNG : RNGBase
@@ -30,7 +31,7 @@ struct BOS_RNG : RNGBase
 		if (!rng) {
 			rng.emplace(std::chrono::high_resolution_clock::now().time_since_epoch().count());
 		}
-		
+
 		if constexpr (std::is_integral_v<T>) {
 			return std::uniform_int_distribution<T>(a_min, a_max)(*rng);
 		} else {
@@ -49,8 +50,7 @@ struct RNGParams : RNGBase
 	RNGParams() = default;
 	explicit RNGParams(const std::string& a_str);
 
-	bool PassedChance(BOS_RNG& a_rng, const RE::TESObjectREFR* a_ref, std::uint64_t a_entryHash) const;
+	operator float() const { return chanceValue; }
 
-	// members
-	float chanceValue{ 100.0f };
+	bool PassedChance(BOS_RNG& a_rng, const RE::TESObjectREFR* a_ref, std::uint64_t a_entryHash) const;
 };

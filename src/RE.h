@@ -9,6 +9,7 @@ namespace regex
 
 namespace RE
 {
+	RE::FormID                          LookupFormID(RE::FormID a_rawFormID, std::string_view a_modName);
 	std::pair<RE::FormID, RE::TESForm*> GetFormWithID(const std::string& a_str, bool a_resolveForm);
 	RE::FormID                          GetFormID(const std::string& a_str);
 
@@ -19,4 +20,5 @@ namespace RE
 	RE::TESObjectCELL* GetParentCell(const RE::TESObjectREFR* a_ref);
 	bool               IsFixedPersistentForm(const RE::TESBoundObject* a_base);
 	RE::TESWorldSpace* GetPersistentRefWorldSpace(const RE::TESObjectREFR* a_ref);
+	bool               IsBaseObject(const RE::TESForm* a_form);
 }

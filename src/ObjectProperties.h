@@ -6,10 +6,15 @@ struct RandValueParams
 {
 	RandValueParams(const RNGParams& a_chance, const RE::TESObjectREFR* a_ref, std::uint64_t a_entryHash);
 
-	BOS_RNG rng;
-	bool    clamp{ false };
-	float   clampMin{ 0.0f };
-	float   clampMax{ 0.0f };
+	float Generate(float a_min, float a_max);
+
+	// members
+	BOS_RNG                  rng;
+	const RE::TESObjectREFR* ref;
+	std::uint64_t            entryHash;
+	bool                     clamp{ false };
+	float                    clampMin{ 0.0f };
+	float                    clampMax{ 0.0f };
 };
 
 struct FloatRange
@@ -58,7 +63,7 @@ public:
 	void         SetTransform(RE::NiPoint3& a_inPoint, RandValueParams& a_params) const;
 
 	// members
-	bool       relative;
+	bool       relative{ false };
 	FloatRange x;
 	FloatRange y;
 	FloatRange z;
@@ -75,17 +80,13 @@ public:
 	bool ChangesXYLocation() const;
 	bool ChangesRecordFlag(std::uint32_t a_flag) const;
 
-	void SetChance(const RNGParams& a_chance, std::uint64_t a_entryHash);
-	void SetTransform(RE::TESObjectREFR* a_refr) const;
+	void SetTransform(RE::TESObjectREFR* a_refr, const RNGParams& a_chance, std::uint64_t a_propertiesHash) const;
 	void SetRecordFlags(RE::TESObjectREFR* a_refr) const;
 
 private:
 	void assign_record_flags(const std::string& a_str, bool a_unsetFlag);
 
 	// members
-	RNGParams     chance{};
-	std::uint64_t entryHash{ 0 };
-
 	std::optional<Point3Range> location{ std::nullopt };
 	std::optional<Point3Range> rotation{ std::nullopt };
 	std::optional<ScaleRange>  refScale{ std::nullopt };

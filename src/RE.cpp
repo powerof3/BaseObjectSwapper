@@ -2,6 +2,27 @@
 
 namespace RE
 {
+	RE::FormID LookupFormID(RE::FormID a_rawFormID, std::string_view a_modName)
+	{
+		static StringMap<const RE::TESFile*> files;
+
+		auto [it, result] = files.try_emplace(a_modName, nullptr);
+		if (result) {
+			it->second = RE::TESDataHandler::GetSingleton()->LookupModByName(a_modName);
+		}
+
+		const auto file = it->second;
+		if (!file || file->compileIndex == 0xFF) {
+			return 0;
+		}
+
+		FormID formID = file->compileIndex << (3 * 8);
+		formID += file->smallFileCompileIndex << ((1 * 8) + 4);
+		formID += a_rawFormID & (file->IsLight() ? 0xFFF : 0xFFFFFF);
+
+		return formID;
+	}
+
 	std::pair<RE::FormID, RE::TESForm*> GetFormWithID(const std::string& a_str, bool a_resolveForm)
 	{
 		if (const auto splitID = REX::STR::SPLIT(a_str, "~"); splitID.size() == 2) {
@@ -11,9 +32,9 @@ namespace RE
 			const auto& modName = splitID[1];
 			if (g_mergeMapperInterface) {
 				const auto [mergedModName, mergedFormID] = g_mergeMapperInterface->GetNewFormID(modName.c_str(), formID);
-				resolvedID = RE::TESDataHandler::GetSingleton()->LookupFormID(mergedFormID, mergedModName);
+				resolvedID = LookupFormID(mergedFormID, mergedModName);
 			} else {
-				resolvedID = RE::TESDataHandler::GetSingleton()->LookupFormID(formID, modName);
+				resolvedID = LookupFormID(formID, modName);
 			}
 
 			return { resolvedID, (a_resolveForm && resolvedID != 0) ? RE::TESForm::LookupByID(resolvedID) : nullptr };
@@ -103,7 +124,7 @@ namespace RE
 		if (!a_base) {
 			return false;
 		}
-		
+
 		switch (a_base->GetFormType()) {
 		case RE::FormType::Sound:
 		case RE::FormType::Activator:
@@ -130,5 +151,10 @@ namespace RE
 		}
 
 		return nullptr;
+	}
+
+	bool IsBaseObject(const RE::TESForm* a_form)
+	{
+		return a_form && !a_form->AsReference();
 	}
 }
